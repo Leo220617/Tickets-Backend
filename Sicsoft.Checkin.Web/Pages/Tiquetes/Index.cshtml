@@ -1,0 +1,286 @@
+﻿@page
+@model Tickets.Pages.Tiquetes.IndexModel
+@{
+    ViewData["Title"] = "Tiquetes";
+}
+
+@using System.Globalization;
+@{
+    NumberFormatInfo formato = new CultureInfo("en-US").NumberFormat;
+    formato.CurrencyGroupSeparator = ",";
+    formato.NumberDecimalSeparator = ".";
+
+
+}
+
+
+@section styles{
+
+    <style>
+        .tableFixHead th {
+            position: sticky;
+            top: 0;
+            background: white;
+        }
+    </style>
+
+}
+
+@section scripts{
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        $(document).ready(function () {
+            jQuery(document).ready(function ($) {
+
+            });
+
+
+
+
+
+
+        });
+
+          var ids = 0;
+        var ids2 = 0;
+        function onClickModal(id) {
+
+        ids = id;
+
+
+            Swal.fire({
+                title: '¿Desea abrir/cerrar este ticket?',
+                showDenyButton: true,
+                showCancelButton: false,
+                confirmButtonText: `Aceptar`,
+                denyButtonText: `Cancelar`,
+                customClass: {
+                    confirmButton: 'swalBtnColor',
+                    denyButton: 'swalDeny'
+                },
+            }).then((result) => {
+                /* Read more about isConfirmed, isDenied below */
+                if (result.isConfirmed) {
+
+                    Eliminar();
+
+                }
+            })
+
+
+    }
+        function  Eliminar() {
+
+
+         $.ajax({
+                        type: 'GET',
+                        dataType: 'json',
+                        url: '@Url.Page("Index", "Eliminar")',
+                        data: { id: ids },
+             success: function (result) {
+
+                             if (result == false) {
+                                 ids = 0;
+                                // $("#Eliminar").hide();
+                                // $("#Error").show();
+                                 Swal.fire({
+                                     icon: 'error',
+                                     title: 'Oops...',
+                                     text: 'Ha ocurrido un error al intentar abrir/cerrar el ticket'
+
+                                 })
+                             } else {
+                                 Swal.fire({
+                                     title: "Ha sido abierto/cerrado con éxito",
+
+                                     icon: 'success',
+                                     showCancelButton: false,
+                                     customClass: {
+                                         confirmButton: 'swalBtnColor',
+
+                                     },
+                                     confirmButtonText: 'OK'
+                                 }).then((result) => {
+                                     if (result.isConfirmed) {
+                                         location.reload();
+                                     }
+                                 })
+                             }
+             },
+             beforeSend: function () {
+
+             },
+             complete: function () {
+
+             }
+                     })
+        }
+    </script>
+}
+
+@using Microsoft.AspNetCore.Http
+@using System;
+@using System.Collections.Generic;
+@using System.IO;
+@using System.Linq;
+@using System.Security.Claims;
+@using System.Threading.Tasks;
+@using Microsoft.AspNetCore.Mvc;
+@using Microsoft.AspNetCore.Mvc.RazorPages;
+@using Microsoft.Extensions.Configuration;
+@using Refit;
+@using Sicsoft.Checkin.Web.Models;
+@inject IHttpContextAccessor httpContextAccessor
+
+@{
+    var Roles = ((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == "Roles").Select(s1 => s1.Value).FirstOrDefault().Split("|");
+}
+
+
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Tickets</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item">Tickets</li>
+        <li class="breadcrumb-item active">Listado</li>
+    </ol>
+
+
+    <form method="get">
+        <div class="row">
+
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <label class="col-form-label">Fecha Inicial:</label>
+                        <input class="form-control" id="FecInicial" type="date" asp-for="filtro.FechaInicial" />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-form-label">Fecha Final:</label>
+                        <input class="form-control" id="FecFinal" type="date" asp-for="filtro.FechaFinal" />
+                    </div>
+
+                </div>
+
+
+            </div>
+            @if (!string.IsNullOrEmpty(Roles.Where(a => a == "4").FirstOrDefault()))
+            {
+                <div class="col-md-3">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <label class="col-form-label">Usuario:</label>
+                            <select asp-for="filtro.Codigo1" id="idUsuario" class="form-control  ">
+                                <option value="0" selected>-Seleccione usuario-</option>
+                                @foreach (var item in Model.Usuarios)
+                                {
+                                    <option value="@item.id">@item.id - @item.Nombre</option>
+                                }
+                            </select>
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+            }
+                <div class="col-md-3">
+
+
+                    <button title="Buscar" type="submit" style="margin-top: 13%;" class="btn btn btn-primary"> <i class="fa fa-search"></i></button>
+
+
+
+
+
+                </div>
+
+            </div>
+    </form>
+
+    <br />
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Tickets
+        </div>
+        <div class="card-body">
+            <table id="datatablesSimple">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Asunto</th>
+                        <th>Usuario Asignado</th>
+                        <th>Duración</th>
+                        <th>Empresa</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Asunto</th>
+                        <th>Usuario Asignado</th>
+                        <th>Duración</th>
+                        <th>Empresa</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </tfoot>
+                <tbody>
+                    @foreach (var item in Model.Objeto)
+                    {
+                    <tr>
+                        <td>@item.id</td>
+                        <td>@item.FechaTicket.Value.ToString("dd/MM/yyyy")</td>
+                        <td>@item.Asunto</td>
+                        <td>@(Model.Usuarios.Where(a => a.id == item.idLoginAsignado).FirstOrDefault() == null ? "No Asignado" : Model.Usuarios.Where(a => a.id == item.idLoginAsignado).FirstOrDefault().Nombre )</td>
+                        <td>@item.Duracion</td>
+                        <td>@(Model.Empresas.Where(a => a.id == item.idEmpresa).FirstOrDefault() == null ? "No Asignado" : Model.Empresas.Where(a => a.id == item.idEmpresa).FirstOrDefault().Nombre )</td>
+                        @switch (item.Status)
+                        {
+                            case "E":
+                                {
+                                    <td>Espera</td>
+                                    break;
+                                }
+                            case "A":
+                                {
+                                    <td>Abierto</td>
+                                    break;
+                                }
+                            case "C":
+                                {
+                                    <td>Cerrado</td>
+                                    break;
+                                }
+                            default:
+                                {
+                                    <td>Espera</td>
+                                    break;
+                                }
+                        }
+                        <td>
+
+                            <a asp-page="./Editar" asp-route-id="@item.id" title="Editar" class="btn btn-warning"> Mirar</a> &nbsp;
+
+                            @if (!string.IsNullOrEmpty(Roles.Where(a => a == "2").FirstOrDefault()))
+                            {
+                                <a onclick="javascript: onClickModal('@item.id')" title="Abrir/Cerrar" class="btn btn-danger">Cambiar Estado</a>
+                            }
+
+                        </td>
+
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

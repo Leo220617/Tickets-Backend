@@ -1,0 +1,220 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Inicio";
+    var Roles = ((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == "Roles").Select(s1 => s1.Value).FirstOrDefault().Split("|");
+}
+
+
+@using System.Globalization;
+@{
+    NumberFormatInfo formato = new CultureInfo("en-US").NumberFormat;
+    formato.CurrencyGroupSeparator = ",";
+    formato.NumberDecimalSeparator = ".";
+
+
+}
+
+
+@section styles{
+    <link rel="stylesheet" href="~/lib/summernote/summernote-bs4.css" />
+    <link rel="stylesheet" href="~/lib/select2/css/select2.min.css" />
+    <link rel="stylesheet" href="~/lib/select2/css/select2-bootstrap4.min.css" />
+    <link href="~/lib/dropzone/basic.css" rel="stylesheet" />
+    <link href="~/lib/dropzone/dropzone.css" rel="stylesheet" />
+    <link href="~/lib/iCheck/skins/square/green.css" rel="stylesheet" />
+    <link href="~/lib/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jasny-bootstrap/4.0.0/css/jasny-bootstrap.min.css">
+    <style>
+        .tableFixHead th {
+            position: sticky;
+            top: 0;
+            background: white;
+        }
+    </style>
+
+}
+@section scripts{
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="~/lib/summernote/summernote-bs4.min.js"></script>
+    <script src="~/lib/select2/js/select2.min.js"></script>
+    <script src="~/lib/dropzone/dropzone.js"></script>
+    <script src="~/lib/iCheck/icheck.js"></script>
+    <script src="~/js/plugins/dataTables/datatables.min.js"></script>
+    <script src="~/js/plugins/dataTables/dataTables.bootstrap4.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            jQuery(document).ready(function ($) {
+
+            });
+
+
+            var ctx = document.getElementById("myAreaChart");
+            var myLineChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ["Abiertos", "Cerrados", "Espera"],
+                    datasets: [{
+                        label: "Cantidad",
+                        backgroundColor: "rgba(2,117,216,1)",
+                        borderColor: "rgba(2,117,216,1)",
+                        data: [@Model.CantAbiertos,@Model.CantCerrados,@Model.CantEspera],
+                    }],
+                },
+                options: {
+                    scales: {
+                        xAxes: [{
+                             
+                            gridLines: {
+                                display: false
+                            },
+                            ticks: {
+                                maxTicksLimit: 6
+                            }
+                        }],
+                        yAxes: [{
+                             
+                            gridLines: {
+                                display: true
+                            }
+                        }],
+                    },
+                    legend: {
+                        display: false
+                    }
+                }
+            });
+        
+
+
+
+        });
+
+
+    </script>
+
+}
+@using Microsoft.AspNetCore.Http
+@using System;
+@using System.Collections.Generic;
+@using System.IO;
+@using System.Linq;
+@using System.Security.Claims;
+@using System.Threading.Tasks;
+@using Microsoft.AspNetCore.Mvc;
+@using Microsoft.AspNetCore.Mvc.RazorPages;
+@using Microsoft.Extensions.Configuration;
+@using Refit;
+@using Sicsoft.Checkin.Web.Models;
+@using Newtonsoft.Json;
+@inject IHttpContextAccessor httpContextAccessor
+
+
+
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Inicio</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item active">Reporterìa</li>
+    </ol>
+
+    <form method="get">
+        <div class="row">
+
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <label class="col-form-label">Fecha Inicial:</label>
+                        <input class="form-control" id="FecInicial" type="date" asp-for="filtro.FechaInicial" />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-form-label">Fecha Final:</label>
+                        <input class="form-control" id="FecFinal" type="date" asp-for="filtro.FechaFinal" />
+                    </div>
+
+                </div>
+
+
+            </div>
+            @if (!string.IsNullOrEmpty(Roles.Where(a => a == "4").FirstOrDefault()))
+            {
+                <div class="col-md-3">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <label class="col-form-label">Usuario:</label>
+                            <select asp-for="filtro.Codigo1" id="idUsuario" class="form-control  ">
+                                <option value="0" selected>-Seleccione usuario-</option>
+                                @foreach (var item in Model.Usuarios)
+                                {
+                                    <option value="@item.id">@item.id - @item.Nombre</option>
+                                }
+                            </select>
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+            }
+            <div class="col-md-3">
+
+
+                <button title="Buscar" type="submit" style="margin-top: 13%;" class="btn btn btn-primary"> <i class="fa fa-search"></i></button>
+
+
+
+
+
+            </div>
+
+        </div>
+    </form>
+    <br />
+
+    <div class="row">
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <label>Cantidad Abiertos</label>
+                    <h1>@Model.CantAbiertos</h1>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <label>Cantidad Cerrados</label>
+                    <h1>@Model.CantCerrados</h1>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <label>Cantidad Espera</label>
+                    <h1>@Model.CantEspera</h1>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="row">
+        <div class="col-xl-12" style="text-align: center;">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-area me-1"></i>
+                    Cantidad Casos
+                </div>
+                <div class="card-body"><canvas id="myAreaChart" width="100%" height="40"></canvas></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>

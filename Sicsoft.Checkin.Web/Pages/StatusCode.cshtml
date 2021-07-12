@@ -1,0 +1,81 @@
+﻿@page
+@model Sicsoft.Checkin.Web.StatusCodeModel
+@{
+    Layout = null;
+
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Login</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/font-awesome/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="~/lib/animate.css/animate.min.css" />
+    <link rel="stylesheet" href="~/css/inspinia.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body class="light-skin">
+    <div class="middle-box text-center animated fadeInDown">
+        @if (Model.ErrorStatusCode == "404")
+        {
+
+            <h1>404</h1>
+            <h3 class="font-bold">Page Not Found</h3>
+
+            <div class="error-desc">
+                Sorry, but the page you are looking for has note been found. Try checking the URL for error, then hit the refresh button on your browser or try found something else in our app.
+
+            </div>
+
+        }
+        else
+        {
+            <h1> @Model.ErrorStatusCode</h1>
+            @if (Model.ShowRequestId)
+            {
+                <h3>Request ID</h3>
+                <p>
+                    <code>@Model.RequestId</code>
+                </p>
+            }
+
+            @if (Model.ShowOriginalURL)
+            {
+                <h3>Original URL</h3>
+                <p>
+                    <code>@Model.OriginalURL</code>
+                </p>
+            }
+
+            <div class="error-desc">
+                An error occurred while processing your request.
+            </div>
+
+        }
+
+
+</body>
+</html>
+
+@*<h1 class="text-danger">Status Code: @Model.ErrorStatusCode</h1>
+    <h2 class="text-danger">An error occurred while processing your request.</h2>*@
+
+@*@if (Model.ShowRequestId)
+    {
+    <h3>Request ID</h3>
+    <p>
+        <code>@Model.RequestId</code>
+    </p>
+    }
+
+    @if (Model.ShowOriginalURL)
+    {
+    <h3>Original URL</h3>
+    <p>
+        <code>@Model.OriginalURL</code>
+    </p>
+    }*@
+

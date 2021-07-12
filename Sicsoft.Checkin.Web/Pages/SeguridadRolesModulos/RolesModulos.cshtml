@@ -1,0 +1,442 @@
+﻿@page "{id}"
+@model InversionGloblalWeb.Pages.SeguridadRolesModulos.RolesModulosModel
+@{
+    ViewData["Title"] = "Asignar Modulos";
+}
+ 
+@section styles{
+    <link rel="stylesheet" href="~/lib/summernote/summernote-bs4.css" />
+    <link rel="stylesheet" href="~/lib/select2/css/select2.min.css" />
+    <link rel="stylesheet" href="~/lib/select2/css/select2-bootstrap4.min.css" />
+    <link href="~/lib/dropzone/basic.css" rel="stylesheet" />
+    <link href="~/lib/dropzone/dropzone.css" rel="stylesheet" />
+    <link href="~/lib/iCheck/skins/square/green.css" rel="stylesheet" />
+    <link href="~/lib/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jasny-bootstrap/4.0.0/css/jasny-bootstrap.min.css">
+<style>
+    h4{
+        font-size: 22px !important;
+    }
+</style>
+
+}
+
+@section scripts{
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="~/lib/summernote/summernote-bs4.min.js"></script>
+    <script src="~/lib/select2/js/select2.min.js"></script>
+    <script src="~/lib/dropzone/dropzone.js"></script>
+    <script src="~/lib/iCheck/icheck.js"></script>
+    <script>
+        $(document).ready(function () {
+            jQuery(document).ready(function ($) {
+                $(document).ready(function () {
+                    $('.mi-selector').select2();
+                });
+            });
+            $(".js-example-responsive").select2({
+                width: 'resolve',// need to override the changed default
+                height: 'resolve'
+            });
+
+            RellenaDatosAsignados();
+
+        });
+
+        var ProdCadena = [];
+        var ProdCadenaM = [];
+
+        function InsertarProductoTablaMia(i) {
+            var detalle =
+            {
+                codModulo: ProdCadena[i].codModulo,
+                descripcion: ProdCadena[i].descripcion
+            }
+            ProdCadenaM.push(detalle);
+
+            ProdCadena.splice(i, 1);
+            RellenaTablaM();
+            RellenaTablaG();
+
+        }
+
+        function InsertarProductoTablaG(i) {
+            var detalle =
+            {
+                codModulo: ProdCadenaM[i].codModulo,
+                descripcion: ProdCadenaM[i].descripcion
+            }
+            ProdCadena.push(detalle);
+
+            ProdCadenaM.splice(i, 1);
+            RellenaTablaM();
+            RellenaTablaG();
+
+        }
+
+        function RellenaDatosAsignados() {
+
+
+
+             $.ajax({
+            type: 'GET',
+            dataType: 'json',
+            url: '@Url.Page("RolesModulos", "Modulos")',
+                 data: { id: $("#CodRol").val() },
+            success: function (result) {
+
+                console.log(result);
+
+
+
+                    for (var i = 0; i < result.modulosGenerales.length; i++) {
+                        var detalle = {
+                            codModulo: result.modulosGenerales[i].codModulo,
+                            descripcion: result.modulosGenerales[i].descripcion,
+
+                        };
+                        ProdCadena.push(detalle);
+
+                    }
+
+                for (var i = 0; i < result.modulosMiosS.length; i++) {
+                    if (result.modulosMiosS[i].descripcion != null) {
+
+                        var detalle = {
+                            codModulo: result.modulosMiosS[i].codModulo,
+                            descripcion: result.modulosMiosS[i].descripcion,
+
+                        };
+                        ProdCadenaM.push(detalle);
+                    }
+
+                    }
+                    RellenaTablaG();
+                    RellenaTablaM();
+
+
+            },
+            beforeSend: function () {
+
+            },
+            complete: function () {
+
+            }
+        });
+        }
+
+        function RellenaTablaG() {
+            var sOptions = '';
+
+            $("#tbody1").html('');
+
+            for (var i = 0; i < ProdCadena.length; i++) {
+                sOptions += '<tr>'
+                sOptions += '<td align="center" style="padding-top:15px;">  <p style="font-size:15px;">' + ProdCadena[i].codModulo + '</p></td>';
+                sOptions += '<td align="left" style="padding-top:15px;">  <p style="font-size:15px;">' + ProdCadena[i].descripcion + '</p></td>';
+
+                sOptions += '<td align="center" style="padding-top:15px;"><a  onclick="javascript: InsertarProductoTablaMia(' + i + ')" title="Pasar Modulo" class="fa fa-forward icono"></a> ';
+
+
+
+                sOptions += '</tr>'
+            }
+            $("#tbody1").html(sOptions);
+        }
+
+
+        function RellenaTablaM() {
+            var sOptions = '';
+
+            $("#tbody2").html('');
+
+            for (var i = 0; i < ProdCadenaM.length; i++) {
+                sOptions += '<tr>'
+                sOptions += '<td align="center" style="padding-top:15px;">  <p style="font-size:15px;">' + ProdCadenaM[i].codModulo + '</p></td>';
+                sOptions += '<td align="left" style="padding-top:15px;">  <p style="font-size:15px;">' + ProdCadenaM[i].descripcion + '</p></td>';
+
+                sOptions += '<td align="center" style="padding-top:15px;"><a  onclick="javascript: InsertarProductoTablaG(' + i + ')" title="Pasar Modulo" class="fa fa-reply icono"></a> ';
+
+
+
+                sOptions += '</tr>'
+            }
+            $("#tbody2").html(sOptions);
+        }
+
+        function Generar() {
+
+            var CodRol = $("#CodRol").val();
+
+            for (var i = 0; i < ProdCadenaM.length; i++) {
+                ProdCadenaM[i].descripcion = ProdCadenaM[i].descripcion.replace(" ", "_");
+            }
+            var rolesMod =
+            {
+                ProdCadenaM
+            };
+            var modulos = JSON.stringify(rolesMod);
+
+
+            var enviar = {
+                CodRol,
+                modulos
+            };
+            var str = JSON.stringify(enviar).toString();
+            str = str.replace(" ", "_");
+            console.log(str);
+
+
+           $.ajax({
+                    type: 'POST',
+
+                    url: '@Url.Page("RolesModulos", "Generar")',
+                    dataType: 'text',
+                    data: { recibidos: str},
+                        headers: {
+                            RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
+                        },
+                    success: function (json) {
+
+                        $("#divProcesando").hide();
+
+                        if ($('.modal-backdrop').is(':visible')) {
+
+                            $('body').removeClass('modal-open');
+                            $('.modal-backdrop').hide();
+                        }
+                        console.log("resultado " + json);
+                        if (json == "true") {
+                            Swal.fire({
+                                title: "Ha sido guardado con éxito",
+
+                                icon: 'success',
+                                showCancelButton: false,
+
+                                confirmButtonText: 'OK',
+                                customClass: {
+                                    confirmButton: 'swalBtnColor',
+
+                                },
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            })
+
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Ha ocurrido un error al intentar guardar'
+
+                            })
+                        }
+                    },
+
+                    beforeSend: function (xhr) {
+
+                        $("#divProcesando").modal("show");
+                    },
+                    complete: function () {
+
+                    },
+                    error: function (error) {
+
+                    }
+                    });
+
+            @*$.ajax({
+                type: 'POST',
+                dataType: 'json',
+                url: '@Url.Page("RolesModulos", "Generar")',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(str),
+                headers: {
+
+                },
+                success: function (result) {
+                    console.log(result);
+                },
+                error: function (xhr) {
+                    console.log(xhr);
+                }
+            })*@
+        }
+
+
+        function PasarTodasDerecha() {
+
+            var tam = ProdCadenaM.length;
+            var tam2 = ProdCadena.length;
+            //for (var i = 0; i < tam; i++) {
+
+            //    ProdCadenaM.splice(i, 1);
+            //}
+            //ProdCadenaM = [];
+
+            for (var i = 0; i < ProdCadena.length; i++) {
+
+                var detalle =
+                {
+                    codModulo: ProdCadena[i].codModulo,
+                    descripcion: ProdCadena[i].descripcion
+                }
+                ProdCadenaM.push(detalle);
+            }
+            //for (var i = 0; i < tam2; i++) {
+            //    ProdCadena.splice(i, 1);
+            //}
+            ProdCadena = [];
+
+
+            RellenaTablaM();
+            RellenaTablaG();
+        }
+
+
+        function PasarTodasIzquierda() {
+            var tam = ProdCadena.length;
+            var tam2 = ProdCadenaM.length;
+            //for (var i = 0; i < tam; i++) {
+            //    ProdCadena.splice(i, 1);
+            //}
+            console.log(tam2);
+            for (var i = 0; i < tam2; i++) {
+
+                var detalle =
+                {
+                    codModulo: ProdCadenaM[i].codModulo,
+                    descripcion: ProdCadenaM[i].descripcion
+                }
+                ProdCadena.push(detalle);
+            }
+            //for (var i = 0; i < tam2; i++) {
+            //    ProdCadenaM.splice(i, 1);
+            //}
+
+            ProdCadenaM = [];
+
+
+            RellenaTablaM();
+            RellenaTablaG();
+        }
+
+        function cerrarModalError() {
+            $("#Error").hide();
+        }
+
+    </script>
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Módulos</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item">Módulos</li>
+        <li class="breadcrumb-item active">Asignación</li>
+    </ol>
+
+    <div class="row">
+        <div class="col-sm-12">
+            <label asp-for="Roles.NombreRol" class="col-form-label">Rol:</label>
+            <div class="form-group row">
+                <div class="col-sm-3">
+                    <input asp-for="Roles.NombreRol" readonly class="form-control">
+                    <input id="CodRol" asp-for="Roles.idRol" hidden />
+                </div>
+            </div>
+        </div>
+
+
+
+
+    </div>
+
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <div class="row">
+                        <div class="col-sm-8">
+                            <h4>
+                                Lista de Módulos Disponibles
+                            </h4>
+                        </div>
+                        <div class="coll-sm-6" style="text-align: right;">
+                            <a onclick="javascript: PasarTodasDerecha()" title="Pasar Todos los Modulos" class="fa fa-fast-forward icono"></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="ibox-content lista">
+                    <div class="table-responsive tableFixHead" style="padding:inherit; overflow:scroll;    z-index: 5; height: 290px;">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+
+                                    <th align="center" style=" text-align: center;">Código</th>
+                                    <th align="center" style=" text-align: center;">Nombre </th>
+
+
+
+
+                                    <th align="center" style=" text-align: center;">Acción</th>
+                                </tr>
+
+                            </thead>
+                            <tbody id="tbody1">
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <div class="row">
+                        <div class="col-sm-8">
+                            <h4>
+                                Lista Módulos Asignados al Rol
+                            </h4>
+                        </div>
+                        <div class="coll-sm-6" style="text-align: right;">
+                            <a onclick="javascript: PasarTodasIzquierda()" title="Pasar Todos los Modulos" class="fa fa-fast-backward icono"></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="ibox-content lista">
+                    <div class="table-responsive tableFixHead" style="padding:inherit; overflow:scroll;    z-index: 5; height: 290px;">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+
+                                    <th align="center" style=" text-align: center;">Código</th>
+                                    <th align="center" style=" text-align: center;">Nombre </th>
+
+
+
+
+                                    <th align="center" style=" text-align: center;">Acción</th>
+                                </tr>
+
+                            </thead>
+                            <tbody id="tbody2">
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end" style="margin-top: 2%;">
+        <button onclick="javascript: Generar();" class="btn btn-w-m btn-primary" title="Guardar">Guardar Cambios</button>
+    </div>
+
+
+</div>
+
+
+ 

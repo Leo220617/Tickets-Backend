@@ -1,0 +1,179 @@
+﻿@page
+@model InversionGloblalWeb.Pages.SeguridadRolesModulos.IndexModel
+@{
+    ViewData["Title"] = "Roles";
+}
+@using System.Globalization;
+@using Microsoft.AspNetCore.Http
+@using System;
+@using System.Collections.Generic;
+@using System.IO;
+@using System.Linq;
+@using System.Security.Claims;
+@using System.Threading.Tasks;
+@using Microsoft.AspNetCore.Mvc;
+@using Microsoft.AspNetCore.Mvc.RazorPages;
+@using Microsoft.Extensions.Configuration;
+@using Refit;
+@inject IHttpContextAccessor httpContextAccessor
+ 
+
+@{
+    var Roles = ((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == "Roles").Select(s1 => s1.Value).FirstOrDefault().Split("|");
+}
+ 
+@section scripts{
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="~/lib/summernote/summernote-bs4.min.js"></script>
+    <script src="~/lib/select2/js/select2.min.js"></script>
+    <script src="~/lib/dropzone/dropzone.js"></script>
+    <script src="~/lib/iCheck/icheck.js"></script>
+    <script src="~/js/plugins/dataTables/datatables.min.js"></script>
+    <script src="~/js/plugins/dataTables/dataTables.bootstrap4.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+
+            $('.dataTables-example').DataTable({
+                pageLength: 10,
+                responsive: true,
+
+
+            });
+
+        });
+        var ids = 0;
+    function onClickModal(id) {
+        ids = id;
+        Swal.fire({
+            title: '¿Desea eliminar este rol?',
+            showDenyButton: true,
+            showCancelButton: false,
+            confirmButtonText: `Aceptar`,
+            denyButtonText: `Cancelar`,
+            customClass: {
+                confirmButton: 'swalBtnColor',
+                denyButton: 'swalDeny'
+            },
+        }).then((result) => {
+            /* Read more about isConfirmed, isDenied below */
+            if (result.isConfirmed) {
+
+                Eliminar();
+
+            }
+        })
+
+    }
+        function  Eliminar() {
+
+         $.ajax({
+                        type: 'GET',
+                        dataType: 'json',
+                        url: '@Url.Page("Index", "Eliminar")',
+                        data: { id: ids },
+             success: function (result) {
+                  
+                             if (result == false) {
+                                 ids = 0;
+                                 Swal.fire({
+                                     icon: 'error',
+                                     title: 'Oops...',
+                                     text: 'Ha ocurrido un error al intentar eliminar'
+
+                                 })
+
+                             } else {
+                                 Swal.fire({
+                                     title: "Ha sido eliminado con éxito",
+
+                                     icon: 'success',
+                                     showCancelButton: false,
+                                     customClass: {
+                                         confirmButton: 'swalBtnColor',
+
+                                     },
+                                     confirmButtonText: 'OK'
+                                 }).then((result) => {
+                                     if (result.isConfirmed) {
+                                         location.reload();
+                                     }
+                                 })
+                             }
+             },
+             beforeSend: function () {
+                 
+             }
+                     })
+        }
+         
+    </script>
+}
+<style>
+    h3 {
+        font-weight: bold;
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Roles</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item">Roles</li>
+        <li class="breadcrumb-item active">Listado</li>
+    </ol>
+    <div class="row" style="margin-block-end: 3%;">
+        <div class="col-sm-6"></div>
+        <div class="col-sm-6" style="text-align: right;">
+            <a asp-page="Nuevo" class="btn btn-primary" title="Agregar"><i class="fa fa-plus"></i> Agregar</a>
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Roles
+        </div>
+        <div class="card-body">
+            <table id="datatablesSimple">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                      
+                        <th>Acción</th>
+
+                    </tr>
+
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+
+                        <th>Acción</th>
+                    </tr>
+                </tfoot>
+                <tbody>
+                    @foreach (var item in Model.Roles)
+                    {
+                        <tr>
+                            <td>@item.idRol</td>
+                            <td>@item.NombreRol</td>
+                            
+
+                            <td>
+
+                                <a asp-page="./Editar" asp-route-id="@item.idRol" title="Editar" class="btn btn-warning"> Editar</a> &nbsp;
+                                <a onclick="javascript: onClickModal('@item.idRol')" title="Activar/Desactivar" class="btn btn-danger">Eliminar</a>&nbsp;
+                                <a asp-page="./RolesModulos" asp-route-id="@item.idRol" title="Asignar módulos" class="btn btn-success"  > Asignar Módulos</a>
+
+                            </td>
+
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+ 

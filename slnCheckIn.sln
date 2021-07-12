@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Checkin", "Checkin\Checkin.csproj", "{013151C8-28CB-48BC-8B68-CDEFE68222AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inspinia_MVC5_SeedProject", "Checkin\Inspinia_MVC5_SeedProject.csproj", "{86CADB26-5817-46B6-88C7-76D5753722C3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{013151C8-28CB-48BC-8B68-CDEFE68222AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{013151C8-28CB-48BC-8B68-CDEFE68222AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{013151C8-28CB-48BC-8B68-CDEFE68222AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{013151C8-28CB-48BC-8B68-CDEFE68222AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86CADB26-5817-46B6-88C7-76D5753722C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86CADB26-5817-46B6-88C7-76D5753722C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86CADB26-5817-46B6-88C7-76D5753722C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86CADB26-5817-46B6-88C7-76D5753722C3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {23C6ED0A-EF26-49DC-9340-6B27D45977DE}
+	EndGlobalSection
+EndGlobal

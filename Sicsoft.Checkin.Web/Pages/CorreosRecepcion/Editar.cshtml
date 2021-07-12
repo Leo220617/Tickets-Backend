@@ -1,0 +1,89 @@
+﻿@page "{id}"
+@model Tickets.Pages.CorreosRecepcion.EditarModel
+@{
+    ViewData["Title"] = "Correos Recepcion";
+}
+@section styles{
+    <link rel="stylesheet" href="~/lib/summernote/summernote-bs4.css" />
+    <link rel="stylesheet" href="~/lib/select2/css/select2.min.css" />
+    <link rel="stylesheet" href="~/lib/select2/css/select2-bootstrap4.min.css" />
+    <link href="~/lib/dropzone/basic.css" rel="stylesheet" />
+    <link href="~/lib/dropzone/dropzone.css" rel="stylesheet" />
+    <link href="~/lib/iCheck/skins/square/green.css" rel="stylesheet" />
+    <link href="~/lib/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jasny-bootstrap/4.0.0/css/jasny-bootstrap.min.css">
+
+}
+
+@section scripts{
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="~/lib/summernote/summernote-bs4.min.js"></script>
+    <script src="~/lib/select2/js/select2.min.js"></script>
+    <script src="~/lib/dropzone/dropzone.js"></script>
+    <script src="~/lib/iCheck/icheck.js"></script>
+
+}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-lg border-0 rounded-lg mt-5">
+            <div class="card-header"><h3 class="text-center font-weight-light my-4">Editar Correo</h3></div>
+            <div class="card-body">
+                <form method="post" id="formTipos" role="form" novalidate class="needs-validation " enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input hidden asp-for="Correo.id" />
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3 mb-md-0">
+                                <input class="form-control" id="inputFirstName" asp-for="Correo.RecepcionEmail" type="email" placeholder="Correo Electrónico" />
+                                <label for="inputFirstName">Correo Electrónico</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3 mb-md-0">
+                                <input class="form-control" id="inputFirstName" asp-for="Correo.RecepcionHostName" type="text" placeholder="Servidor del correo" />
+                                <label for="inputFirstName">Servidor del Correo</label>
+                            </div>
+                        </div>
+
+
+
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" asp-for="Correo.RecepcionUseSSL">
+                        <label class="form-check-label" for="flexCheckDefault">
+                            Usa SSL
+                        </label>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3 mb-md-0">
+                                <input class="form-control" id="inputFirstName" asp-for="Correo.RecepcionPassword" type="text" placeholder="Contraseña" />
+                                <label for="inputFirstName">Contraseña del Correo</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3 mb-md-0">
+                                <input class="form-control" id="inputFirstName" asp-for="Correo.RecepcionPort" type="number" placeholder="Puerto Entrante" />
+                                <label for="inputFirstName">Puerto Entrante</label>
+                            </div>
+                        </div>
+
+
+
+                    </div>
+
+
+
+
+
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" id="Guardar" class="btn btn-w-m btn-primary">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

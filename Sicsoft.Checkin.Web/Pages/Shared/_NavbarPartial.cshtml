@@ -1,0 +1,77 @@
+﻿@using Microsoft.AspNetCore.Http
+@using System;
+@using System.Collections.Generic;
+@using System.IO;
+@using System.Linq;
+@using System.Security.Claims;
+@using System.Threading.Tasks;
+@using Microsoft.AspNetCore.Mvc;
+@using Microsoft.AspNetCore.Mvc.RazorPages;
+@using Microsoft.Extensions.Configuration;
+@using Refit;
+@using Sicsoft.Checkin.Web.Models;
+@inject IHttpContextAccessor httpContextAccessor
+@{
+    var Roles = ((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == "Roles").Select(s1 => s1.Value).FirstOrDefault().Split("|");
+}
+
+<style>
+    .colorBlue {
+        background-color: #57b846;
+    }
+</style>
+ 
+<nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+    <div class="sb-sidenav-menu">
+        <div class="nav">
+            @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "6").FirstOrDefault()))
+                {
+                    <div class="sb-sidenav-menu-heading">Usuarios</div>
+                    <a class="nav-link" asp-page="/Usuarios/Index">
+                        <div class="sb-nav-link-icon"><i class="fas fa-user"></i></div>
+                        Listado
+                    </a>
+                }
+
+            }
+
+            @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "8").FirstOrDefault()))
+                {
+                    <div class="sb-sidenav-menu-heading">Correos Recepción</div>
+                    <a class="nav-link" asp-page="/CorreosRecepcion/Index">
+                        <div class="sb-nav-link-icon"><i class="fas fa-id-card"></i></div>
+                        Correos Recepción
+                    </a>
+                }
+
+            }
+            @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "11").FirstOrDefault()))
+                {
+                    <div class="sb-sidenav-menu-heading">Empresas</div>
+                    <a class="nav-link" asp-page="/Empresas/Index">
+                        <div class="sb-nav-link-icon"><i class="fas fa-home" ></i></div>
+                        Listado
+                    </a>
+                }
+
+            }
+
+            @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "1").FirstOrDefault()))
+                {
+                    <div class="sb-sidenav-menu-heading">Tickets</div>
+                    <a class="nav-link" asp-page="/Tiquetes/Index">
+                        <div class="sb-nav-link-icon"><i class="fas fa-receipt"></i></div>
+                        Listado
+                    </a>
+                }
+
+            }
+
+
+        </div>
+    </div>
+    <div class="sb-sidenav-footer">
+        <div class="small">Usuario:</div>
+        @(((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == ClaimTypes.Name).Select(s1 => s1.Value).FirstOrDefault())
+    </div>
+</nav>

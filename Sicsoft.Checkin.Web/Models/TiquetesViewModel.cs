@@ -13,8 +13,10 @@ namespace Tickets.Models
         public DateTime? FechaTicket { get; set; }
 
         [StringLength(200)]
+        [Required]
         public string Asunto { get; set; }
 
+        [Required]
         public string Mensaje { get; set; }
 
         public string Comentarios { get; set; }

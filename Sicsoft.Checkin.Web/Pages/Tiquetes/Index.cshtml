@@ -145,7 +145,12 @@
         <li class="breadcrumb-item">Tickets</li>
         <li class="breadcrumb-item active">Listado</li>
     </ol>
-
+    <div class="row" style="margin-block-end: 3%;">
+        <div class="col-sm-6"></div>
+        <div class="col-sm-6" style="text-align: right;">
+            <a asp-page="Nuevo" class="btn btn-primary" title="Agregar"><i class="fa fa-plus"></i> Agregar</a>
+        </div>
+    </div>
 
     <form method="get">
         <div class="row">
@@ -186,18 +191,18 @@
 
                 </div>
             }
-                <div class="col-md-3">
+            <div class="col-md-3">
 
 
-                    <button title="Buscar" type="submit" style="margin-top: 13%;" class="btn btn btn-primary"> <i class="fa fa-search"></i></button>
+                <button title="Buscar" type="submit" style="margin-top: 13%;" class="btn btn btn-primary"> <i class="fa fa-search"></i></button>
 
 
 
 
-
-                </div>
 
             </div>
+
+        </div>
     </form>
 
     <br />
@@ -236,48 +241,48 @@
                 <tbody>
                     @foreach (var item in Model.Objeto)
                     {
-                    <tr>
-                        <td>@item.id</td>
-                        <td>@item.FechaTicket.Value.ToString("dd/MM/yyyy")</td>
-                        <td>@item.Asunto</td>
-                        <td>@(Model.Usuarios.Where(a => a.id == item.idLoginAsignado).FirstOrDefault() == null ? "No Asignado" : Model.Usuarios.Where(a => a.id == item.idLoginAsignado).FirstOrDefault().Nombre )</td>
-                        <td>@item.Duracion</td>
-                        <td>@(Model.Empresas.Where(a => a.id == item.idEmpresa).FirstOrDefault() == null ? "No Asignado" : Model.Empresas.Where(a => a.id == item.idEmpresa).FirstOrDefault().Nombre )</td>
-                        @switch (item.Status)
-                        {
-                            case "E":
-                                {
-                                    <td>Espera</td>
-                                    break;
-                                }
-                            case "A":
-                                {
-                                    <td>Abierto</td>
-                                    break;
-                                }
-                            case "C":
-                                {
-                                    <td>Cerrado</td>
-                                    break;
-                                }
-                            default:
-                                {
-                                    <td>Espera</td>
-                                    break;
-                                }
-                        }
-                        <td>
-
-                            <a asp-page="./Editar" asp-route-id="@item.id" title="Editar" class="btn btn-warning"> Mirar</a> &nbsp;
-
-                            @if (!string.IsNullOrEmpty(Roles.Where(a => a == "2").FirstOrDefault()))
+                        <tr>
+                            <td>@item.id</td>
+                            <td>@item.FechaTicket.Value.ToString("dd/MM/yyyy")</td>
+                            <td>@item.Asunto</td>
+                            <td>@(Model.Usuarios.Where(a => a.id == item.idLoginAsignado).FirstOrDefault() == null ? "No Asignado" : Model.Usuarios.Where(a => a.id == item.idLoginAsignado).FirstOrDefault().Nombre )</td>
+                            <td>@item.Duracion</td>
+                            <td>@(Model.Empresas.Where(a => a.id == item.idEmpresa).FirstOrDefault() == null ? "No Asignado" : Model.Empresas.Where(a => a.id == item.idEmpresa).FirstOrDefault().Nombre )</td>
+                            @switch (item.Status)
                             {
-                                <a onclick="javascript: onClickModal('@item.id')" title="Abrir/Cerrar" class="btn btn-danger">Cambiar Estado</a>
+                                case "E":
+                                    {
+                                        <td>Espera</td>
+                                        break;
+                                    }
+                                case "A":
+                                    {
+                                        <td>Abierto</td>
+                                        break;
+                                    }
+                                case "C":
+                                    {
+                                        <td>Cerrado</td>
+                                        break;
+                                    }
+                                default:
+                                    {
+                                        <td>Espera</td>
+                                        break;
+                                    }
                             }
+                            <td>
 
-                        </td>
+                                <a asp-page="./Editar" asp-route-id="@item.id" title="Editar" class="btn btn-warning"> Mirar</a> &nbsp;
 
-                    </tr>
+                                @if (!string.IsNullOrEmpty(Roles.Where(a => a == "2").FirstOrDefault()))
+                                {
+                                    <a onclick="javascript: onClickModal('@item.id')" title="Abrir/Cerrar" class="btn btn-danger">Cambiar Estado</a>
+                                }
+
+                            </td>
+
+                        </tr>
                     }
                 </tbody>
             </table>

@@ -98,12 +98,12 @@
                 width: 'resolve',// need to override the changed default
                 height: 'resolve'
             });
-
-
-
+           
 
 
         });
+       
+        
     </script>
 
 }
@@ -151,18 +151,18 @@
 
                         <div class="col-md-4">
                             <div class="form-floating mb-3 mb-md-0">
-                              
 
 
-                                    <select asp-for="Tiquete.idLoginAsignado" id="idUsuario" class="form-control  ">
-                                        <option value="0" selected>-Seleccione usuario-</option>
-                                        @foreach (var item in Model.Usuarios)
-                                        {
-                                            <option value="@item.id">@item.id - @item.Nombre</option>
-                                        }
-                                    </select>
-                             
-                                
+
+                                <select asp-for="Tiquete.idLoginAsignado" id="idUsuario" class="form-control  ">
+                                    <option value="0" selected>-Seleccione usuario-</option>
+                                    @foreach (var item in Model.Usuarios)
+                                    {
+                                        <option value="@item.id">@item.id - @item.Nombre</option>
+                                    }
+                                </select>
+
+
                                 <label for="Asunto">Persona a Asignar</label>
                             </div>
                         </div>
@@ -170,19 +170,30 @@
 
                         <div class="col-md-4">
                             <div class="form-floating mb-3 mb-md-0">
-                               
 
-                                    <select asp-for="Tiquete.idEmpresa" id="idUsuario" class="form-control  ">
-                                        <option value="0" selected>-Seleccione empresa-</option>
-                                        @foreach (var item in Model.Empresas)
-                                        {
-                                            <option value="@item.id">@item.id - @item.Nombre</option>
-                                        }
-                                    </select>
-                                 
+
+                                <select asp-for="Tiquete.idEmpresa" id="idUsuario" class="form-control  ">
+                                    <option value="0" selected>-Seleccione empresa-</option>
+                                    @foreach (var item in Model.Empresas)
+                                    {
+                                        <option value="@item.id">@item.id - @item.Nombre</option>
+                                    }
+                                </select>
+
                                 <label for="Asunto">Empresa</label>
                             </div>
                         </div>
+                        
+
+
+                            <div class="col-md-4">
+                                <div class="form-floating mb-3 mb-md-0">
+                                    <input class="form-control" id="DuracionEstimada" asp-for="Tiquete.DuracionEstimada" type="time" />
+                                    <label for="DuracionEstimada">Duración Estimada</label>
+                                </div>
+                            </div>
+                         
+
                     </div>
                 </div>
             </div>
@@ -241,4 +252,8 @@
 
     </div>
 
+
+
+
 </form>
+

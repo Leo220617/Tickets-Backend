@@ -130,6 +130,10 @@
         }
     </script>
     <script>
+
+
+
+        var AdjuntosAnteriores = [];
         $(document).ready(function () {
             jQuery(document).ready(function ($) {
                 $(document).ready(function () {
@@ -142,12 +146,117 @@
             });
 
 
+            var array = $("#Adjunto").val().split("¶");
+            console.log(array);
+
+            for (let i = 0; i < array.length; i++) {
+
+                if (array[i] != "") {
+
+                    AdjuntosAnteriores[i] = array[i];
+                }
+            }
+
+            if (AdjuntosAnteriores[0] != "" && AdjuntosAnteriores[0] != undefined) {
+                $("#src1").prop('src', AdjuntosAnteriores[0]);
+            }
+            if (AdjuntosAnteriores[1] != "" && AdjuntosAnteriores[1] != undefined) {
+                $("#src2").prop('src', AdjuntosAnteriores[1]);
+            }
 
 
 
         });
-    </script>
+        var Image2Bae64 = "";
+        var ImageBae64 = "";
+        Dropzone.options.dropzoneForm = {
+            paramName: "file", // The name that will be used to transfer the file
+            maxfiles: 2,
+            maxFilesize: 3, // MB
+            thumbnailHeight: 1020,
+            thumbnailWidth: 1020,
+            filesizeBase: 1000,
+            uploadMultiple: false,
+            addRemoveLinks: true,
+            acceptedFiles: ".png, .jpg, .jpeg",
+            dictDefaultMessage: "<strong>Arrastra los archivos. </strong></br> (Da clic para seleccionar el archivo a cargar; máximo 2)",
+            init: function () {
 
+
+
+
+                this.on('addedfile', function (file) {
+
+
+                    if (this.files.length > 2) {
+                        this.removeFile(this.files[0]);
+                    }
+                    ImageBae64 = $(".dz-image").children()[0].src;
+                    if ($(".dz-image").children().length == 2) {
+                        Image2Bae64 = $(".dz-image").children()[1].src;
+                        console.log(Image2Bae64);
+
+                    }
+
+
+
+
+
+                });
+                this.on("complete", function (file) {
+
+                    if ((AdjuntosAnteriores.length + $(".dz-image").children().length) <= 2) {
+                        $(".dz-remove").html("<div><span class='fa fa-trash text-danger' style='font-size: 1.5em'></span></div>");
+                        // ImageBae64 = $(".dz-image").children()[0].src;
+
+                        //if ($(".dz-image").children().length == 2) {
+                        //    Image2Bae64 = $(".dz-image").children()[1].src;
+
+
+                        //}
+
+                        //$("#Adjunto").val(ImageBae64 + "¶" + Image2Bae64);
+                        //var ImagenJunta = ImageBae64 + "¶" + Image2Bae64;
+
+                        //console.log(ImagenJunta);
+                    } else {
+                        if (AdjuntosAnteriores.length == 1) {
+                            this.removeFile(this.files[0]);
+
+                        } else {
+                            this.removeFile(this.files[0]);
+                            this.removeFile(this.files[1]);
+                        }
+                    }
+                    ImageBae64 = $(".dz-image").children()[0].src;
+                    if ($(".dz-image").children().length == 2) {
+                        Image2Bae64 = $(".dz-image").children()[1].src;
+
+
+                    }
+
+                    if (AdjuntosAnteriores[0] != undefined) {
+                        Image2Bae64 = ImageBae64;
+                        ImageBae64 = AdjuntosAnteriores[0];
+                    } else if (AdjuntosAnteriores[0] != undefined && AdjuntosAnteriores[1] != undefined) {
+                        ImageBae64 = AdjuntosAnteriores[0];
+                        Image2Bae64 = AdjuntosAnteriores[1];
+                    }
+
+                    $("#Adjunto").val(ImageBae64 + "¶" + Image2Bae64);
+                });
+            }
+        };
+
+        function abrirModal() {
+            $("#modalAdjuntos").modal("show");
+        }
+        function Cerrar() {
+            $("#modalAdjuntos").modal("hide");
+        }
+
+    </script>
+  
 }
 
 <form method="post" id="formTipos" role="form" novalidate class="needs-validation " enctype="multipart/form-data">
@@ -159,6 +268,7 @@
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                     <input hidden asp-for="Tiquete.id" />
                     <input hidden asp-for="Tiquete.Duracion" id="Duracion" />
+                    <input asp-for="Tiquete.Adjunto" id="Adjunto" hidden />
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <div class="form-floating mb-3 mb-md-0">
@@ -174,6 +284,7 @@
                         </div>
 
                         <div class="col-md-4">
+
                             <div class="cronometro">
                                 <div id="hms"></div>
                                 <div class="boton fa fa-play start"></div>
@@ -182,14 +293,15 @@
                                 {
 
 
-<div class="boton fa fa-redo reiniciar"></div>
-            }
-            else
-            {
-                            <div class="boton fa fa-redo reiniciar" hidden></div>
-            }
-                                </div>
+                                    <div class="boton fa fa-redo reiniciar"></div>
+                                }
+                                else
+                                {
+                                    <div class="boton fa fa-redo reiniciar" hidden></div>
+                                }
+                            </div>
                         </div>
+
 
 
                     </div>
@@ -252,6 +364,14 @@
                                 }
                                 <label for="Asunto">Empresa</label>
                             </div>
+
+
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-floating mb-3 mb-md-0">
+                                <input class="form-control" id="DuracionEstimada" asp-for="Tiquete.DuracionEstimada" type="time" />
+                                <label for="DuracionEstimada">Duración Estimada</label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -301,6 +421,7 @@
                 </div>
             </div>
         </div>
+
         <div class="row">
             <div class="col-sm-12" style="margin-block-end: 18px;">
                 <div class="d-flex justify-content-end">
@@ -310,5 +431,53 @@
         </div>
 
     </div>
+    <DIV id="dropzone">
+        <h4 class="text-center font-weight-light my-4">Agregar Adjuntos</h4>
+        <h5 class="text-center font-weight-light my-4" onclick="javascript: abrirModal();" style="color: #0d6efd; text-decoration: underline; cursor:pointer;">Ver Adjuntos</h5>
+        <div class="dropzone" id="dropzoneForm">
+            <div class="fallback">
+                <input name="file" type="file" multiple />
+            </div>
+        </div>
+    </DIV>
+
 
 </form>
+
+
+<!--Modal de adjuntos-->
+<!-- Modal -->
+<div class="modal fade" id="modalAdjuntos" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+
+                <h4 class="  text-center font-weight-light my-4">Adjuntos</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+
+                    <div class="col-sm-6" style="text-align: center;">
+
+
+                        <img src="" style="width: 100%; height: 100%; border: 1px solid #ccc; padding: 3px; " id="src1" width="100" height='50' />
+
+
+
+                    </div>
+                    <div class="col-sm-6" style="text-align: center;">
+
+
+                        <img src="" style="width: 100%; height: 100%; border: 1px solid #ccc; padding: 3px;" id="src2" width="100" height='50' />
+
+
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" onclick="javascript: Cerrar();">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

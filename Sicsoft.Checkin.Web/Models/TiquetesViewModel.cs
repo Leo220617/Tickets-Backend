@@ -30,5 +30,8 @@ namespace Tickets.Models
         public string PersonaTicket { get; set; }
         public string Status { get; set; }
         public int idEmpresa { get; set; }
+
+        public string Adjunto { get; set; }
+        public string DuracionEstimada { get; set; }
     }
 }

@@ -63,6 +63,8 @@ namespace Tickets.Pages.Tiquetes
         {
             try
             {
+                
+
                 await service.Agregar(Tiquete);
                 return RedirectToPage("./Index");
             }
@@ -73,5 +75,7 @@ namespace Tickets.Pages.Tiquetes
                 return Page();
             }
         }
+
+
     }
 }

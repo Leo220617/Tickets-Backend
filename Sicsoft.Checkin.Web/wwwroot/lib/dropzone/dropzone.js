@@ -158,7 +158,7 @@ var Dropzone = function (_Emitter) {
          * Can be changed to `"put"` if necessary. You can also provide a function
          * that will be called with `files` and must return the method (since `v3.12.0`).
          */
-        method: "post",
+        method: "get",
 
         /**
          * Will be set on the XHRequest.
@@ -1058,13 +1058,13 @@ var Dropzone = function (_Emitter) {
     }
 
     // @options.url = @element.getAttribute "action" unless @options.url?
-    if (_this.options.url == null) {
-      _this.options.url = _this.element.getAttribute("action");
-    }
+    //if (_this.options.url == null) {
+    //  _this.options.url = _this.element.getAttribute("action");
+    //}
 
-    if (!_this.options.url) {
-      throw new Error("No URL provided.");
-    }
+    //if (!_this.options.url) {
+    //  throw new Error("No URL provided.");
+    //}
 
     if (_this.options.acceptedFiles && _this.options.acceptedMimeTypes) {
       throw new Error("You can't provide both 'acceptedFiles' and 'acceptedMimeTypes'. 'acceptedMimeTypes' is deprecated.");

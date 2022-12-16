@@ -26,12 +26,14 @@
 
 }
 
-@section scripts{
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @section scripts{
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 
     <script>
-        $(document).ready(function () {
-            jQuery(document).ready(function ($) {
+        $(document).ready(function() {
+            jQuery(document).ready(function($) {
 
             });
 
@@ -42,11 +44,11 @@
 
         });
 
-          var ids = 0;
+        var ids = 0;
         var ids2 = 0;
         function onClickModal(id) {
 
-        ids = id;
+            ids = id;
 
 
             Swal.fire({
@@ -69,71 +71,71 @@
             })
 
 
-    }
-        function  Eliminar() {
+        }
+        function Eliminar() {
 
 
-         $.ajax({
-                        type: 'GET',
-                        dataType: 'json',
-                        url: '@Url.Page("Index", "Eliminar")',
-                        data: { id: ids },
-             success: function (result) {
+            $.ajax({
+                type: 'GET',
+                dataType: 'json',
+                url: '@Url.Page("Index", "Eliminar")',
+                data: { id: ids },
+                success: function(result) {
 
-                             if (result == false) {
-                                 ids = 0;
-                                // $("#Eliminar").hide();
-                                // $("#Error").show();
-                                 Swal.fire({
-                                     icon: 'error',
-                                     title: 'Oops...',
-                                     text: 'Ha ocurrido un error al intentar abrir/cerrar el ticket'
+                    if (result == false) {
+                        ids = 0;
+                        // $("#Eliminar").hide();
+                        // $("#Error").show();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Ha ocurrido un error al intentar abrir/cerrar el ticket'
 
-                                 })
-                             } else {
-                                 Swal.fire({
-                                     title: "Ha sido abierto/cerrado con éxito",
+                        })
+                    } else {
+                        Swal.fire({
+                            title: "Ha sido abierto/cerrado con éxito",
 
-                                     icon: 'success',
-                                     showCancelButton: false,
-                                     customClass: {
-                                         confirmButton: 'swalBtnColor',
+                            icon: 'success',
+                            showCancelButton: false,
+                            customClass: {
+                                confirmButton: 'swalBtnColor',
 
-                                     },
-                                     confirmButtonText: 'OK'
-                                 }).then((result) => {
-                                     if (result.isConfirmed) {
-                                         location.reload();
-                                     }
-                                 })
-                             }
-             },
-             beforeSend: function () {
+                            },
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload();
+                            }
+                        })
+                    }
+                },
+                beforeSend: function() {
 
-             },
-             complete: function () {
+                },
+                complete: function() {
 
-             }
-                     })
+                }
+            })
         }
     </script>
 }
 
-@using Microsoft.AspNetCore.Http
-@using System;
-@using System.Collections.Generic;
-@using System.IO;
-@using System.Linq;
-@using System.Security.Claims;
-@using System.Threading.Tasks;
-@using Microsoft.AspNetCore.Mvc;
-@using Microsoft.AspNetCore.Mvc.RazorPages;
-@using Microsoft.Extensions.Configuration;
-@using Refit;
-@using Sicsoft.Checkin.Web.Models;
-@inject IHttpContextAccessor httpContextAccessor
+    @using Microsoft.AspNetCore.Http
+    @using System;
+    @using System.Collections.Generic;
+    @using System.IO;
+    @using System.Linq;
+    @using System.Security.Claims;
+    @using System.Threading.Tasks;
+    @using Microsoft.AspNetCore.Mvc;
+    @using Microsoft.AspNetCore.Mvc.RazorPages;
+    @using Microsoft.Extensions.Configuration;
+    @using Refit;
+    @using Sicsoft.Checkin.Web.Models;
+    @inject IHttpContextAccessor httpContextAccessor
 
-@{
+    @{
     var Roles = ((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == "Roles").Select(s1 => s1.Value).FirstOrDefault().Split("|");
 }
 
@@ -208,7 +210,7 @@
     <br />
     <div class="card mb-4">
         <div class="card-header">
-            <i class="fas fa-table me-1"></i>
+            <i class="fa fa-table me-1"></i>
             Tickets
         </div>
         <div class="card-body">
@@ -243,49 +245,53 @@
                 <tbody>
                     @foreach (var item in Model.Objeto)
                     {
-                    <tr>
-                        <td>@item.id</td>
-                        <td>@item.FechaTicket.Value.ToString("dd/MM/yyyy")</td>
-                        <td>@item.Asunto</td>
-                        <td>@(Model.Usuarios.Where(a => a.id == item.idLoginAsignado).FirstOrDefault() == null ? "No Asignado" : Model.Usuarios.Where(a => a.id == item.idLoginAsignado).FirstOrDefault().Nombre )</td>
-                        <td>@item.Duracion</td>
-                        <td>@item.DuracionEstimada</td>
-                        <td>@(Model.Empresas.Where(a => a.id == item.idEmpresa).FirstOrDefault() == null ? "No Asignado" : Model.Empresas.Where(a => a.id == item.idEmpresa).FirstOrDefault().Nombre )</td>
-                        @switch (item.Status)
-                        {
-                            case "E":
-                                {
-                                    <td>Espera</td>
-                                    break;
-                                }
-                            case "A":
-                                {
-                                    <td>Abierto</td>
-                                    break;
-                                }
-                            case "C":
-                                {
-                                    <td>Cerrado</td>
-                                    break;
-                                }
-                            default:
-                                {
-                                    <td>Espera</td>
-                                    break;
-                                }
-                        }
-                        <td>
-
-                            <a asp-page="./Editar" asp-route-id="@item.id" title="Editar" class="btn btn-warning"> Mirar</a> &nbsp;
-
-                            @if (!string.IsNullOrEmpty(Roles.Where(a => a == "2").FirstOrDefault()))
+                        <tr>
+                            <td>@item.id</td>
+                            <td>@item.FechaTicket.Value.ToString("dd/MM/yyyy")</td>
+                            <td>@item.Asunto</td>
+                            <td>@(Model.Usuarios.Where(a => a.id == item.idLoginAsignado).FirstOrDefault() == null ? "No Asignado" : Model.Usuarios.Where(a => a.id == item.idLoginAsignado).FirstOrDefault().Nombre )</td>
+                            <td>@item.Duracion</td>
+                            <td>@item.DuracionEstimada</td>
+                            <td>@(Model.Empresas.Where(a => a.id == item.idEmpresa).FirstOrDefault() == null ? "No Asignado" : Model.Empresas.Where(a => a.id == item.idEmpresa).FirstOrDefault().Nombre )</td>
+                            @switch (item.Status)
                             {
-                                <a onclick="javascript: onClickModal('@item.id')" title="Abrir/Cerrar" class="btn btn-danger">Cambiar Estado</a>
+                                case "E":
+                                    {
+                                        <td>Espera</td>
+                                        break;
+                                    }
+                                case "A":
+                                    {
+                                        <td>Abierto</td>
+                                        break;
+                                    }
+                                case "C":
+                                    {
+                                        <td>Cerrado</td>
+                                        break;
+                                    }
+                                default:
+                                    {
+                                        <td>Espera</td>
+                                        break;
+                                    }
                             }
+                            <td>
+                                @if (item.Status != "C")
+                                {
+                                    <a asp-page="./Editar" asp-route-id="@item.id" title="Editar" class="fa fa-edit icono">  </a>
 
-                        </td>
+                                }
+                                &nbsp;
+                                @if (!string.IsNullOrEmpty(Roles.Where(a => a == "2").FirstOrDefault()))
+                                {
+                                    <a onclick="javascript: onClickModal('@item.id')" title="Abrir/Cerrar" class="fa fa-eraser icono">   </a>
+                                }
+                                 &nbsp;
+                                 <a asp-page="./Observar" asp-route-id="@item.id" title="Observar" class="fa fa-eye icono" style="color: yellow;">  </a>
+                            </td>
 
-                    </tr>
+                        </tr>
                     }
                 </tbody>
             </table>

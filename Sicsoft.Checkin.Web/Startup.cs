@@ -163,7 +163,9 @@ namespace Sicsoft.Checkin.Web
 .ConfigureHttpClient(c => c.BaseAddress = new Uri($"{Configuration["UrlWebApi"]}/api/Adjuntos"))
 .AddHttpMessageHandler<AuthenticatedHttpClientHandler>();
 
-
+            services.AddRefitClient<ICrudApi<BitacoraErroresViewModel, int>>()
+.ConfigureHttpClient(c => c.BaseAddress = new Uri($"{Configuration["UrlWebApi"]}/api/BitacoraErrores"))
+.AddHttpMessageHandler<AuthenticatedHttpClientHandler>();
 
 
             return services;

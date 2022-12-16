@@ -28,18 +28,27 @@
                 {
                     <div class="sb-sidenav-menu-heading">Usuarios</div>
                     <a class="nav-link" asp-page="/Usuarios/Index">
-                        <div class="sb-nav-link-icon"><i class="fas fa-user"></i></div>
+                        <div class="sb-nav-link-icon"><i class="fa fa-user"></i></div>
                         Listado
                     </a>
                 }
 
             }
+             @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "15").FirstOrDefault()))
+                {
+                    <div class="sb-sidenav-menu-heading">Bitacora Errores</div>
+                    <a class="nav-link" asp-page="/BitacoraErrores/Index">
+                        <div class="sb-nav-link-icon"><i class="fa fa-exclamation-circle"></i></div>
+                        Listado
+                    </a>
+                }
 
+            }
             @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "8").FirstOrDefault()))
                 {
                     <div class="sb-sidenav-menu-heading">Correos Recepción</div>
                     <a class="nav-link" asp-page="/CorreosRecepcion/Index">
-                        <div class="sb-nav-link-icon"><i class="fas fa-id-card"></i></div>
+                        <div class="sb-nav-link-icon"><i class="fa fa-id-card"></i></div>
                         Correos Recepción
                     </a>
                 }
@@ -49,7 +58,7 @@
                 {
                     <div class="sb-sidenav-menu-heading">Empresas</div>
                     <a class="nav-link" asp-page="/Empresas/Index">
-                        <div class="sb-nav-link-icon"><i class="fas fa-home" ></i></div>
+                        <div class="sb-nav-link-icon"><i class="fa fa-home" ></i></div>
                         Listado
                     </a>
                 }
@@ -60,13 +69,13 @@
                 {
                     <div class="sb-sidenav-menu-heading">Tickets</div>
                     <a class="nav-link" asp-page="/Tiquetes/Index">
-                        <div class="sb-nav-link-icon"><i class="fas fa-receipt"></i></div>
+                        <div class="sb-nav-link-icon"><i class="fa fa-ticket"></i></div>
                         Listado
                     </a>
                 }
 
             }
-
+           
 
         </div>
     </div>

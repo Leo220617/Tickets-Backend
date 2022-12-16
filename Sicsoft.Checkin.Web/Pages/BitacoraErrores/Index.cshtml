@@ -1,0 +1,108 @@
+﻿@page
+@model Tickets.Pages.BitacoraErrores.IndexModel
+@{
+    ViewData["Title"] = "Bitacora Errores";
+}
+@using System.Globalization;
+@using Microsoft.AspNetCore.Http
+@using System;
+@using System.Collections.Generic;
+@using System.IO;
+@using System.Linq;
+@using System.Security.Claims;
+@using System.Threading.Tasks;
+@using Microsoft.AspNetCore.Mvc;
+@using Microsoft.AspNetCore.Mvc.RazorPages;
+@using Microsoft.Extensions.Configuration;
+@using Refit;
+@inject IHttpContextAccessor httpContextAccessor
+
+
+@{
+    var Roles = ((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == "Roles").Select(s1 => s1.Value).FirstOrDefault().Split("|");
+}
+
+@section scripts{
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="~/lib/summernote/summernote-bs4.min.js"></script>
+    <script src="~/lib/select2/js/select2.min.js"></script>
+    <script src="~/lib/dropzone/dropzone.js"></script>
+    <script src="~/lib/iCheck/icheck.js"></script>
+    <script src="~/js/plugins/dataTables/datatables.min.js"></script>
+    <script src="~/js/plugins/dataTables/dataTables.bootstrap4.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+
+            $('.dataTables-example').DataTable({
+                pageLength: 10,
+                responsive: true,
+
+
+            });
+
+        });
+  
+
+    </script>
+}
+<style>
+    h3 {
+        font-weight: bold;
+    }
+</style>
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Bitacora Errores</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item">Bitacora Errores</li>
+        <li class="breadcrumb-item active">Listado</li>
+    </ol>
+    <div class="row" style="margin-block-end: 3%;">
+        <div class="col-sm-6"></div>
+        <div class="col-sm-6" style="text-align: right;">
+           
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fa fa-table me-1"></i>
+            Bitacora Errores
+        </div>
+        <div class="card-body">
+            <table id="datatablesSimple">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descripción</th>
+                        <th>Fecha</th>
+                     
+
+                    </tr>
+
+                </thead>
+                <tfoot>
+                    <tr>
+                       <th>Código</th>
+                        <th>Descripción</th>
+                        <th>Fecha</th>
+                       
+                    </tr>
+                </tfoot>
+                <tbody>
+                    @foreach (var item in Model.Objeto)
+                    {
+                    <tr>
+                        <td>@item.id</td>
+                        <td>@item.Descripcion</td>
+                        <td>@item.Fecha</td>
+
+                      
+
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

@@ -64,6 +64,7 @@ namespace Tickets.Pages.Tiquetes
                     DateTime ultimoDia = primerDia.AddMonths(1).AddDays(-1);
 
                     filtro.FechaFinal = ultimoDia;
+                    filtro.Texto2 = "A";
 
                 }
                 Usuarios = await users.ObtenerLista("");

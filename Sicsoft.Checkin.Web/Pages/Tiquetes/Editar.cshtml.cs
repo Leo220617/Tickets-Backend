@@ -67,6 +67,7 @@ namespace Tickets.Pages.Tiquetes
                     }
                 }
 
+                Tiquete.DuracionReal = Tiquete.Duracion;
 
                 return Page();
             }
@@ -94,14 +95,17 @@ namespace Tickets.Pages.Tiquetes
                     }
                      await serviceAdj.AgregarBulk(arrayAdj.ToArray());
                 }
-               
+               if(Tiquete.Duracion == "00:00:00" || (Tiquete.Duracion != Tiquete.DuracionReal && Convert.ToDateTime(Tiquete.DuracionReal) > Convert.ToDateTime(Tiquete.Duracion)))
+                {
+                    Tiquete.Duracion = Tiquete.DuracionReal;
+                }
                 await service.Editar(Tiquete);
                 return RedirectToPage("./Index");
             }
             catch (ApiException ex)
             {
-                Errores error = JsonConvert.DeserializeObject<Errores>(ex.Content.ToString());
-                ModelState.AddModelError(string.Empty, error.Message);
+                
+                ModelState.AddModelError(string.Empty, ex.Content.ToString());
                 return Page();
             }
         }

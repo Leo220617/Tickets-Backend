@@ -79,12 +79,23 @@
     </style>
 }
 
-@section scripts{
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @section scripts{
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
     <script src="~/lib/summernote/summernote-bs4.min.js"></script>
     <script src="~/lib/select2/js/select2.min.js"></script>
     <script src="~/lib/dropzone/dropzone.js"></script>
     <script src="~/lib/iCheck/icheck.js"></script>
+
+    <script>
+        $(document).ready(function() {
+  $('#DuracionReal').mask('00:00:00');
+
+        });
+    </script>
+
+
     <script type="text/javascript">
         window.onload = init;
         function init() {
@@ -94,6 +105,9 @@
             h = parseInt(document.getElementById("Duracion").value.substring(0, 2));
             m = parseInt(document.getElementById("Duracion").value.substring(3, 5));
             s = parseInt(document.getElementById("Duracion").value.substring(6, 8));
+            if (isNaN(s)) {
+                s = 0;
+            }
             document.getElementById("hms").innerHTML = document.getElementById("Duracion").value;
         }
         function cronometrar() {
@@ -134,9 +148,9 @@
 
 
         var AdjuntosAnteriores = [];
-        $(document).ready(function () {
-            jQuery(document).ready(function ($) {
-                $(document).ready(function () {
+        $(document).ready(function() {
+            jQuery(document).ready(function($) {
+                $(document).ready(function() {
                     $('.mi-selector').select2();
                 });
             });
@@ -180,12 +194,12 @@
             addRemoveLinks: true,
             acceptedFiles: ".png, .jpg, .jpeg",
             dictDefaultMessage: "<strong>Arrastra los archivos. </strong></br> (Da clic para seleccionar el archivo a cargar; máximo 2)",
-            init: function () {
+            init: function() {
 
 
 
 
-                this.on('addedfile', function (file) {
+                this.on('addedfile', function(file) {
 
 
                     if (this.files.length > 2) {
@@ -203,7 +217,7 @@
 
 
                 });
-                this.on("complete", function (file) {
+                this.on("complete", function(file) {
 
                     if ((AdjuntosAnteriores.length + $(".dz-image").children().length) <= 2) {
                         $(".dz-remove").html("<div><span class='fa fa-trash text-danger' style='font-size: 1.5em'></span></div>");
@@ -256,40 +270,40 @@
         }
 
     </script>
-  
+
 }
 
-<form method="post" id="formTipos" role="form" novalidate class="needs-validation " enctype="multipart/form-data">
-    <div class="row justify-content-center">
-        <div class="col-lg-11">
-            <div class="card shadow-lg border-0 rounded-lg mt-5">
-                <div class="card-header"><h4 class="text-center font-weight-light my-4">Detalle Ticket</h4></div>
-                <div class="card-body">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    <input hidden asp-for="Tiquete.id" />
-                    <input hidden asp-for="Tiquete.Duracion" id="Duracion" />
-                    <input asp-for="Tiquete.Adjunto" id="Adjunto" hidden />
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <div class="form-floating mb-3 mb-md-0">
-                                <input class="form-control" id="inputFecha" asp-for="Tiquete.FechaTicket" type="date" readonly />
-                                <label for="inputFecha">Fecha de Creación</label>
+    <form method="post" id="formTipos" role="form" novalidate class="needs-validation " enctype="multipart/form-data">
+        <div class="row justify-content-center">
+            <div class="col-lg-11">
+                <div class="card shadow-lg border-0 rounded-lg mt-5">
+                    <div class="card-header"><h4 class="text-center font-weight-light my-4">Detalle Ticket</h4></div>
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input hidden asp-for="Tiquete.id" />
+                        <input hidden asp-for="Tiquete.Duracion" id="Duracion" />
+                        <input asp-for="Tiquete.Adjunto" id="Adjunto" hidden />
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="form-floating mb-3 mb-md-0">
+                                    <input class="form-control" id="inputFecha" asp-for="Tiquete.FechaTicket" type="date" readonly />
+                                    <label for="inputFecha">Fecha de Creación</label>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-floating mb-3 mb-md-0">
-                                <input class="form-control" id="inputFecha" asp-for="Tiquete.PersonaTicket" type="text" readonly />
-                                <label for="inputFecha">Envio el ticket</label>
+                            <div class="col-md-4">
+                                <div class="form-floating mb-3 mb-md-0">
+                                    <input class="form-control" id="inputFecha" asp-for="Tiquete.PersonaTicket" type="text" readonly />
+                                    <label for="inputFecha">Envio el ticket</label>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="col-md-4">
+                            <div class="col-md-4">
 
-                            <div class="cronometro">
-                                <div id="hms"></div>
-                                <div class="boton fa fa-play start"></div>
-                                <div class="boton fa fa-stop stop"></div>
-                                @if (!string.IsNullOrEmpty(Roles.Where(a => a == "5").FirstOrDefault()))
+                                <div class="cronometro">
+                                    <div id="hms"></div>
+                                    <div class="boton fa fa-play start"></div>
+                                    <div class="boton fa fa-stop stop"></div>
+                                    @if (!string.IsNullOrEmpty(Roles.Where(a => a == "5").FirstOrDefault()))
                                 {
 
 
@@ -374,6 +388,23 @@
                             </div>
                         </div>
                     </div>
+                    @if (!string.IsNullOrEmpty(Roles.Where(a => a == "17").FirstOrDefault()))
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="form-floating mb-3 mb-md-0">
+                                    <input class="form-control" id="DuracionReal" asp-for="Tiquete.DuracionReal" type="text"   />
+                                    <label for="DuracionReal">Duración Real</label>
+                                </div>
+                            </div>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <input class="form-control" id="DuracionReal" asp-for="Tiquete.DuracionReal" type="text" hidden />
+                    }
+
                 </div>
             </div>
         </div>

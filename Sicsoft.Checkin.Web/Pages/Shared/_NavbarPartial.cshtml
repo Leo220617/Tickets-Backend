@@ -65,6 +65,28 @@
 
             }
 
+              @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "18").FirstOrDefault()))
+                {
+                    <div class="sb-sidenav-menu-heading">Tipos Actividades</div>
+                    <a class="nav-link" asp-page="/TiposActividades/Index">
+                        <div class="sb-nav-link-icon"><i class="fa fa-home" ></i></div>
+                        Listado
+                    </a>
+                }
+
+            }
+
+            @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "20").FirstOrDefault()))
+                {
+                    <div class="sb-sidenav-menu-heading">Calendario</div>
+                    <a class="nav-link" asp-page="/Planificacion/Calendario">
+                        <div class="sb-nav-link-icon"><i class="fa fa-home" ></i></div>
+                        Listado
+                    </a>
+                }
+
+            }
+
             @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "1").FirstOrDefault()))
                 {
                     <div class="sb-sidenav-menu-heading">Tickets</div>

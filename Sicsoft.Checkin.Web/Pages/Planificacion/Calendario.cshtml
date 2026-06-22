@@ -1,0 +1,797 @@
+﻿@page
+@model Tickets.Pages.Planificacion.CalendarioModel
+@{
+    ViewData["Title"] = "Calendario";
+}
+
+@section styles {
+
+    <style>
+        .fc-daygrid-event {
+    border-radius: 6px !important;
+    padding: 6px !important;
+    font-size: 14px !important;
+    line-height: 1.3;
+}
+
+.fc .fc-daygrid-day-frame {
+    min-height: 120px !important;
+}
+
+/* Agrandar texto del evento */
+.fc-daygrid-event {
+    font-size: 14px !important;
+    font-weight: 600;
+}
+
+/* Agrandar punto de color */
+.fc-daygrid-event-dot {
+    width: 8px !important;
+    height: 8px !important;
+}
+
+/* Que no corte tan rápido */
+.fc-daygrid-event .fc-event-title {
+    white-space: normal !important;
+}
+
+        /* ===== ESTILO BASE ===== */
+        .cliente-item {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        /* ===== MODO CLARO ===== */
+        body:not(.dark-mode) .cliente-item.seleccionado {
+            background-color: #e7f1ff !important;
+            border: 1px solid #0d6efd !important;
+            color: #000;
+        }
+
+        /* ===== MODO OSCURO ===== */
+        body.dark-mode .cliente-item.seleccionado {
+            background-color: #1f2a40 !important;
+            border: 1px solid #4dabf7 !important;
+            color: #fff;
+        }
+
+        /* Hover modo oscuro */
+        body.dark-mode .cliente-item:hover {
+            background-color: #1a2236;
+        }
+
+        /* Hover modo claro */
+        body:not(.dark-mode) .cliente-item:hover {
+            background-color: #f8f9fa;
+        }
+
+    </style>
+}
+
+@section scripts {
+    <script>
+        $('#modalRegistrarVisita').on('shown.bs.modal', function () {
+            if ($('#cvisitar').hasClass("select2-hidden-accessible")) {
+                $('#cvisitar').select2('destroy');
+            }
+            $('#cvisitar').select2({
+                dropdownParent: $('#modalRegistrarVisita'),
+                width: '100%',
+                placeholder: 'Seleccione un cliente'
+            });
+
+        });
+        function onClickModal() {
+            $("#modalRegistrarVisita").modal("show");
+        }
+    </script>
+    <script>
+       document.addEventListener('DOMContentLoaded', function () {
+
+    var data = JSON.parse($("#Detalle").val());
+    const calendarEl = document.getElementById('calendar');
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        height: 850,
+        events: data,
+        dayMaxEvents: false,
+        eventClick: function (info) {
+
+    info.jsEvent.preventDefault();
+
+    const props = info.event.extendedProps;
+    const idEvento = info.event.id;
+
+    let badgeColor =
+        props.estado === "Realizado" ? "success" :
+        props.estado === "Pendiente" ? "warning" :
+        "danger";
+
+    let botonRealizado = props.estado !== "Realizado"
+        ? `<button id="btnRealizado" class="btn btn-success w-100 mt-2">
+                Marcar como realizado
+           </button>`
+        : '';
+         
+
+        let iconoAdjunto = props.tieneAdjunto
+        ? '<i class="fa fa-paperclip text-primary"></i> Tiene adjunto'
+        : 'Sin adjuntos';
+
+
+        let listaAdjuntos = '';
+
+if (props.adjuntos && props.adjuntos.length > 0) {
+
+    listaAdjuntos = `
+        <hr>
+        <p><strong>Adjuntos:</strong></p>
+    `;
+
+    props.adjuntos.forEach(a => {
+
+       listaAdjuntos += `
+    <div class="d-flex align-items-center mb-2">
+        <i class="fa fa-paperclip me-2 text-primary"></i>
+        <a href="${a.Adjunto}" target="_blank">
+            Descargar adjunto
+        </a>
+    </div>
+`;
+    });
+}
+
+    Swal.fire({
+        title: info.event.title,
+        html: `
+            <div style="text-align:left">
+
+                <span class="badge bg-${badgeColor}">
+                    ${props.estado}
+                </span>
+
+                <hr>
+
+                <p><strong>Fecha:</strong> ${info.event.startStr}</p>
+                <p><strong>Comentario:</strong> ${props.comentario ?? ''}</p>
+                 ${listaAdjuntos}
+
+
+                ${botonRealizado}
+
+            </div>
+        `,
+        showConfirmButton: false,
+        showCloseButton: true,
+        didOpen: () => {
+
+            const btn = document.getElementById("btnRealizado");
+
+            if (btn) {
+                btn.addEventListener("click", function () {
+                    marcarComoRealizado(idEvento, info.event);
+                });
+            }
+        }
+    });
+},
+
+        eventDidMount: function (info) {
+
+    const { tipo, estado } = info.event.extendedProps;
+
+    // 🎨 Colores por tipo
+    const coloresTipo = {
+        1: "#0d6efd",
+        2: "#6f42c1",
+        3: "#20c997"
+    };
+
+    if (coloresTipo[tipo]) {
+        info.el.style.backgroundColor = coloresTipo[tipo];
+        info.el.style.color = "#fff";
+    }
+
+    // ✅ Si está realizado, sobrescribe
+    if (estado === "Realizado") {
+        info.el.style.backgroundColor = "#28a745";
+        info.el.style.borderColor = "#28a745";
+        info.el.style.color = "#fff";
+    }
+
+    info.el.style.cursor = "pointer";
+}
+
+    });
+
+    calendar.render();
+});
+
+function marcarComoRealizado(id, evento) {
+    console.log("ID marcado: " + id);
+    $.ajax({
+        type: 'POST',
+        url: '@Url.Page("Calendario", "MarcarRealizado")',
+        data: JSON.stringify({ id: id }),
+        contentType: 'application/json',
+        headers: {
+            RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
+        },
+        success: function (json) {
+
+            if (json.success) {
+
+                // 🔥 Actualiza visualmente sin recargar
+                evento.setExtendedProp("estado", "Realizado");
+                evento.setProp("backgroundColor", "#28a745");
+                evento.setProp("borderColor", "#28a745");
+
+                Swal.close();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Actividad marcada como realizada'
+                }).then(() => {
+                            location.reload();
+                        });;
+
+            }
+        }
+    });
+}
+        function actualizarFechaEvento(id, nuevaFecha) {
+
+            const data = {
+                id: id,
+                fecha: nuevaFecha
+            };
+
+            var jsonString = JSON.stringify(data);
+            var compressedData = pako.gzip(jsonString);
+
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Page("Calendario", "ActualizarFecha")',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: compressedData.buffer,
+                processData: false,
+                headers: {
+                    RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                success: function (json) {
+
+                    if (json.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Fecha actualizada'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error al actualizar'
+                        });
+                    }
+                }
+            });
+        }
+
+    </script>
+    <script>
+        var Clientes = JSON.parse($("#Clientes").val());
+
+        
+         
+    </script>
+    <script>
+        function guardarVisita() {
+
+            const data = {
+                cardcode: $("#cvisitar").val(),
+                fecha: $("#fechaVisita").val(),
+                observacion: $("#descripcionVisita").val(),
+                tipo: $("#tipo").val()
+            };
+
+            if (!data.fecha) {
+                alert("Complete todos los campos");
+                return;
+            }
+
+
+            Swal.fire({
+                title: '¿Desea guardar los cambios?',
+                showDenyButton: true,
+                showCancelButton: false,
+                confirmButtonText: `Aceptar`,
+                denyButtonText: `Cancelar`,
+                customClass: {
+                    confirmButton: 'swalBtnColor',
+                    denyButton: 'swalDeny'
+                },
+            }).then((result) => {
+                if (result.isConfirmed) {
+
+                    var recibidos = JSON.stringify(data);
+                    var jsonString = JSON.stringify(data);
+                    // Comprimir la cadena JSON utilizando gzip
+                    var compressedData = pako.gzip(jsonString);
+
+                    // Convertir los datos comprimidos a un ArrayBuffer (opcional, depende de tu caso de uso)
+                    var compressedArrayBuffer = compressedData.buffer;
+
+
+                    $.ajax({
+                        type: 'POST',
+                        url: '@Url.Page("Calendario", "Planificador")',
+                        dataType: 'json',
+                        contentType: 'application/json',
+                        data: compressedArrayBuffer,
+                        processData: false,
+                        headers: {
+                            RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (json) { 
+                            document.getElementById('loader-container').style.display = 'none';
+                            console.log("resultado " + json.mensaje);
+                            if (json.success == true) {
+                                Swal.fire({
+                                    title: "Ha sido generado con éxito",
+
+                                    icon: 'success',
+                                    showCancelButton: false,
+
+                                    confirmButtonText: 'OK',
+                                    customClass: {
+                                        confirmButton: 'swalBtnColor',
+
+                                    },
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        location.reload();
+                                    }
+                                })
+
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Oops...',
+                                    text: 'Ha ocurrido un error al intentar guardar ' + json.mensaje
+
+                                })
+                            }
+                        },
+
+                        beforeSend: function (xhr) {
+
+                            document.getElementById('loader-container').style.display = 'block';
+                        },
+                        complete: function () {
+
+                        },
+                        error: function (error) {
+                            document.getElementById('loader-container').style.display = 'none';
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Ha ocurrido un error al intentar guardar ' + error
+
+                            })
+                        }
+                    });
+
+                }
+                else {
+
+
+                }
+
+            })
+        }
+    </script>
+
+    <script>
+        function cargarClientes() {
+
+            let html = "";
+
+            Clientes.forEach(c => {
+
+                html += `
+                <div class="cliente-item form-check p-2 rounded mb-1"
+                     data-nombre="${c.Nombre.toLowerCase()}" >
+
+                    <input class="form-check-input cliente-check"
+                           type="checkbox"
+                           value="${c.id}"
+                           id="chk_${c.id}">
+
+                    <label class="form-check-label">
+                        <strong>${c.id}</strong><br>
+                        <small>${c.Nombre}</small><br> 
+                    </label>
+                </div>
+                `;
+            });
+
+            $("#listaClientes").html(html);
+        }
+        function aplicarFiltros() {
+
+            const texto = $("#buscarCliente").val().toLowerCase();
+            const ruta = $("#filtroRuta").val();
+
+            $(".cliente-item").each(function () {
+
+                const nombre = $(this).data("nombre"); 
+
+                const coincideNombre = nombre.includes(texto); 
+
+                if (coincideNombre) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+
+            });
+
+            actualizarContador();
+        }
+
+
+        $(document).ready(function () { 
+            cargarClientes();
+
+            // BUSCADOR
+            $("#buscarCliente").on("keyup", aplicarFiltros); 
+
+            // SELECCIONAR TODOS
+            $("#checkAll").on("change", function () {
+
+                $(".cliente-item:visible .cliente-check")
+                    .prop("checked", this.checked)
+                    .trigger("change");
+
+            });
+
+            // CONTADOR + RESALTADO
+            $(document).on("change", ".cliente-check", function () {
+
+                const item = $(this).closest(".cliente-item");
+
+                if ($(this).is(":checked")) {
+                    item.addClass("seleccionado");
+                } else {
+                    item.removeClass("seleccionado");
+                }
+
+                actualizarContador();
+            });
+
+        });
+        function actualizarContador() {
+
+            const cantidad = $(".cliente-check:checked").length;
+            $("#contadorSeleccionados").text(cantidad);
+
+        }
+        function generarOpcionesTipos() {
+
+    const tipos = JSON.parse($("#TiposActividad").val());
+
+    let html = '<option value="">Seleccione tipo</option>';
+
+    tipos.forEach(t => {
+        html += `<option value="${t.id}">${t.nombre}</option>`; 
+    });
+
+    return html;
+}
+        function agendarSeleccionados() {
+
+            const seleccionados = [];
+
+    $(".cliente-check:checked").each(function () {
+        seleccionados.push($(this).val());
+    });
+
+    if (seleccionados.length === 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Seleccione al menos un cliente'
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Agendar Actividad',
+         html: `
+        <input type="text"
+               id="tituloSwal"
+               class="swal2-input"
+               placeholder="Título">
+
+        <select id="tipoSwal" class="swal2-input">
+            ${generarOpcionesTipos()}
+        </select>
+
+        <input type="date"
+               id="fechaSwal"
+               class="swal2-input">
+
+               <input type="file"
+                   id="adjuntosSwal"
+                   class="swal2-file"
+                   multiple>
+    `,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+         preConfirm: async () => {
+
+            const titulo = document.getElementById('tituloSwal').value;
+            const fecha = document.getElementById('fechaSwal').value;
+            const tipo = document.getElementById('tipoSwal').value;
+            const files = document.getElementById('adjuntosSwal').files;
+
+            if (!titulo || !fecha || !tipo) {
+                Swal.showValidationMessage('Complete todos los campos');
+                return false;
+            }
+
+            const adjuntos = await convertirArchivosBase64(files);
+
+            return { titulo, fecha, tipo, adjuntos };
+        }
+    }).then((result) => {
+
+        if (result.isConfirmed) {
+
+            guardarActividadMultiple(
+                seleccionados,
+                result.value.titulo,
+                result.value.fecha,
+                result.value.tipo, 
+                result.value.adjuntos
+            );
+        }
+    });
+        }
+        function convertirArchivosBase64(files) {
+
+    return new Promise((resolve) => {
+
+        let adjuntos = [];
+        let contador = 0;
+
+        if (files.length === 0) {
+            resolve([]);
+        }
+
+        for (let i = 0; i < files.length; i++) {
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+
+                adjuntos.push({
+                    Adjunto: e.target.result // base64 completo
+                });
+
+                contador++;
+
+                if (contador === files.length) {
+                    resolve(adjuntos);
+                }
+            };
+
+            reader.readAsDataURL(files[i]);
+        }
+    });
+}
+       function guardarActividadMultiple(clientes, titulo, fecha, tipo, archivos) {
+
+            const data = {
+                clientes: clientes,
+                fecha: fecha,
+                tipo: tipo,
+                titulo: titulo,
+                adjuntos_actividades: archivos // vacío si no hay
+            };
+
+            if (!data.tipo) {
+                Swal.fire("Seleccione el tipo de actividad");
+                return;
+            }
+
+            var jsonString = JSON.stringify(data);
+            var compressedData = pako.gzip(jsonString);
+
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Page("Calendario", "PlanificadorMultiple")',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: compressedData.buffer,
+                processData: false,
+                headers: {
+                    RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                success: function (json) {
+                    if (json.success) {
+                        Swal.fire("Agendado correctamente").then(() => {
+                            location.reload();
+                        });
+                    }
+                }
+            });
+        }
+
+    </script>
+}
+
+@using System.Globalization;
+@using Microsoft.AspNetCore.Http
+@using System;
+@using System.Collections.Generic;
+@using System.IO;
+@using System.Linq;
+@using System.Security.Claims;
+@using System.Threading.Tasks;
+@using Microsoft.AspNetCore.Mvc;
+@using Microsoft.AspNetCore.Mvc.RazorPages;
+@using Microsoft.Extensions.Configuration;
+@using Newtonsoft.Json
+@using Refit;
+@inject IHttpContextAccessor httpContextAccessor
+@{
+    var Roles = ((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == "Roles").Select(s1 => s1.Value).FirstOrDefault().Split("|");
+}
+@{
+    NumberFormatInfo formato = new CultureInfo("es-CR").NumberFormat;
+    formato.CurrencyGroupSeparator = ",";
+    formato.NumberDecimalSeparator = ".";
+
+
+}
+ 
+ 
+        <div class="row justify-content-center">
+            <div class="col-lg-12">
+                <div class="card shadow-lg border-0 rounded-lg mt-5">
+                    <div class="card-header pb-0">
+                        <div class="row">
+                            <div class="col-sm-6">
+                               
+                            </div>
+                            <div class="col-sm-6">
+                                
+                               @*  <a class="btn btn-rounded btn-outline-primary" onclick="javascript: onClickModal()" title="Agregar">Agendar Cliente</a> *@
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="card-body">
+                        <input hidden id="Detalle" value="@JsonConvert.SerializeObject(Model.Calendario)" />
+                        <input hidden id="Clientes" value="@JsonConvert.SerializeObject(Model.ObjetoClientes)" />
+                        <input hidden id="TiposActividad" value='@JsonConvert.SerializeObject(Model.ObjetoTA)' />
+                        <div class="row">
+
+                            <!-- PANEL CLIENTES -->
+                            <div class="col-12 col-lg-3 border-end" style="height:650px; display:flex; flex-direction:column;">
+
+                                <h5 class="mb-3">Clientes</h5>
+
+                   
+                                
+                                <!-- Buscador -->
+                                <input type="text" id="buscarCliente"
+                                       class="form-control mb-2"
+                                       placeholder="Buscar cliente...">
+
+                                <!-- Seleccionar todos -->
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="checkAll">
+                                    <label class="form-check-label fw-bold">
+                                        Seleccionar todos
+                                    </label>
+                                </div>
+
+                                <!-- Contador -->
+                                <div class="mb-2 text-muted">
+                                    Seleccionados: <span id="contadorSeleccionados">0</span>
+                                </div>
+
+                                <!-- Lista -->
+                                <div id="listaClientes"
+                                     style="flex:1; overflow-y:auto; border:1px solid #eee; padding:10px; border-radius:8px;">
+                                </div>
+
+                                <!-- Botón -->
+                                <button class="btn btn-primary mt-3 w-100" onclick="agendarSeleccionados()">
+                                    Agendar
+                                </button>
+
+                            </div>
+
+                            <!-- CALENDARIO -->
+                            <div class="col-12 col-lg-9">
+                                <div id="calendar"></div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+  
+
+<div class="modal fade" id="modalRegistrarVisita" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Registrar Visita</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <input type="hidden" id="idPlanificador" />
+
+                
+
+                <div class="form-group mb-3">
+                    <label>Cliente</label>
+                    <select class="form-control select2" id="cvisitar" required>
+                        <option value="0"> Seleccione</option>
+@* 
+                        @foreach (var item in Model.ObjetoClientes)
+                        {
+                            <option value="@item.cardcode"> @item.cardcode - @item.nombre</option>
+                        } *@
+
+
+                    </select>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Fecha a realizar</label>
+                    <input type="date" id="fechaVisita" class="form-control" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Tipo</label>
+                    <select class="form-control select2" id="tipo" required>
+                        <option value="Visita" selected> Visita</option>
+                        <option value="Tarea"> Tarea</option>
+
+
+
+                    </select>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Observacion</label>
+                    <textarea id="descripcionVisita"
+                              class="form-control"
+                              rows="3"
+                              placeholder="observacion"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-success" onclick="javascript: guardarVisita()">Guardar Visita</button>
+            </div>
+
+        </div>
+    </div>
+</div>

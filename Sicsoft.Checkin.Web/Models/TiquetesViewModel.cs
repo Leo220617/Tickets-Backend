@@ -34,5 +34,6 @@ namespace Tickets.Models
         public string Adjunto { get; set; }
         public string DuracionEstimada { get; set; }
         public string DuracionReal { get; set; }
+        public string Tipo { get; set; }
     }
 }

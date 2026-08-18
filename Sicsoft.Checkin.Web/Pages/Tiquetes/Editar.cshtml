@@ -1,514 +1,654 @@
 ﻿@page "{id}"
 @model Tickets.Pages.Tiquetes.EditarModel
 @{
-    ViewData["Title"] = "Tickets";
+    ViewData["Title"] = "Atender solicitud";
+
+    var rolesClaim = ((ClaimsIdentity)User.Identity).Claims
+        .FirstOrDefault(c => c.Type == "Roles")?.Value ?? string.Empty;
+    var Roles = rolesClaim.Split('|', StringSplitOptions.RemoveEmptyEntries);
+    var puedeAsignar = Roles.Contains("3");
+    var puedeCambiarEmpresa = Roles.Contains("14");
+    var puedeEditarDuracionReal = Roles.Contains("17");
+    var puedeReiniciarTiempo = Roles.Contains("5");
 }
 
-@using Microsoft.AspNetCore.Http
-@using System;
-@using System.Collections.Generic;
-@using System.IO;
-@using System.Linq;
-@using System.Security.Claims;
-@using System.Threading.Tasks;
-@using Microsoft.AspNetCore.Mvc;
-@using Microsoft.AspNetCore.Mvc.RazorPages;
-@using Microsoft.Extensions.Configuration;
-@using Refit;
-@using Sicsoft.Checkin.Web.Models;
-@inject IHttpContextAccessor httpContextAccessor
+@using System
+@using System.Linq
+@using System.Security.Claims
 
-@{
-    var Roles = ((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == "Roles").Select(s1 => s1.Value).FirstOrDefault().Split("|");
-}
-
-@section styles{
-    <link rel="stylesheet" href="~/lib/summernote/summernote-bs4.css" />
-    <link rel="stylesheet" href="~/lib/select2/css/select2.min.css" />
-    <link rel="stylesheet" href="~/lib/select2/css/select2-bootstrap4.min.css" />
-    <link href="~/lib/dropzone/basic.css" rel="stylesheet" />
-    <link href="~/lib/dropzone/dropzone.css" rel="stylesheet" />
-    <link href="~/lib/iCheck/skins/square/green.css" rel="stylesheet" />
-    <link href="~/lib/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet" />
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jasny-bootstrap/4.0.0/css/jasny-bootstrap.min.css">
-    <style type="text/css">
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+@section styles {
+    <link rel="stylesheet" href="~/lib/dropzone/basic.css" />
+    <link rel="stylesheet" href="~/lib/dropzone/dropzone.css" />
+    <style>
+        body {
+            background: #f2f3f3;
         }
 
-        .cronometro {
-            width: 200px;
-            height: 100px;
-            top: 50%;
-            left: 50%;
-            position: absolute;
-            margin-top: -50px;
-            margin-left: -100px;
-            text-align: center;
+        .support-page {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 0 1rem 3rem;
         }
 
-        .boton {
-            display: inline-block;
+        .console-bar {
+            background: #131e29;
+            color: #fff;
+            margin: 0 -1rem 1rem;
+            padding: .72rem 1.25rem;
+            border-bottom: 3px solid #ff9900;
+        }
+
+        .console-brand {
+            font-size: .95rem;
+            font-weight: 700;
+            letter-spacing: .02em;
+        }
+
+            .console-brand i {
+                color: #ff9900;
+            }
+
+        .support-header {
+            background: #fff;
+            color: #161e2d;
+            border: 1px solid #d5dbdb;
+            border-radius: 3px;
+            padding: 1rem 1.25rem;
+            box-shadow: none;
+        }
+
+            .support-header .ticket-number {
+                color: rgba(255,255,255,.72);
+                font-size: .85rem;
+                letter-spacing: .08em;
+                text-transform: uppercase;
+            }
+
+            .support-header .ticket-number {
+                color: #687078;
+                letter-spacing: .03em;
+            }
+
+        .support-card {
+            border: 1px solid #d5dbdb;
+            border-radius: 3px;
+            box-shadow: none;
+            overflow: hidden;
+        }
+
+            .support-card .card-header {
+                background: #fafafa;
+                border-bottom: 1px solid #d5dbdb;
+                padding: .8rem 1rem;
+            }
+
+            .support-card .card-body {
+                padding: 1.25rem;
+            }
+
+        .section-icon {
             width: 32px;
-            height: 40px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 2px;
+            background: #e7f1f7;
+            color: #0073bb;
+        }
+
+        .meta-label {
+            display: block;
+            color: #718096;
+            font-size: .76rem;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            margin-bottom: .2rem;
+        }
+
+        .request-box {
+            min-height: 260px;
+            white-space: pre-wrap;
+            background: #f8fafc;
+            border: 1px solid #edf0f3;
+            border-radius: 12px;
+            padding: 1.25rem;
+            color: #263442;
+        }
+
+        .reply-box {
+            min-height: 240px !important;
+            resize: vertical;
+            border-radius: 10px;
+        }
+
+        .reply-card {
+            border-top: 3px solid #ff9900;
+        }
+
+        .composer-tabs {
+            display: flex;
+            border-bottom: 1px solid #d5dbdb;
+            margin: -1.25rem -1.25rem 1.25rem;
+            background: #fafafa;
+        }
+
+        .composer-tab {
+            border: 0;
+            border-right: 1px solid #d5dbdb;
+            background: transparent;
+            padding: .8rem 1.2rem;
+            color: #414d5c;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+            .composer-tab.active {
+                color: #0073bb;
+                background: #fff;
+                box-shadow: inset 0 -3px #ff9900;
+            }
+
+        .composer-panel {
+            display: none;
+        }
+
+            .composer-panel.active {
+                display: block;
+            }
+
+        .case-status {
+            display: inline-flex;
+            align-items: center;
+            background: #e6f6ed;
+            color: #1d8102;
+            border: 1px solid #a8d5ba;
+            border-radius: 12px;
+            padding: .18rem .65rem;
+            font-size: .78rem;
+            font-weight: 700;
+        }
+
+            .case-status:before {
+                content: '';
+                width: 7px;
+                height: 7px;
+                background: #1d8102;
+                border-radius: 50%;
+                margin-right: .4rem;
+            }
+
+        .btn-amazon {
+            background: #ff9900;
+            border-color: #e88b00;
+            color: #161e2d;
+            font-weight: 700;
+        }
+
+            .btn-amazon:hover {
+                background: #ec8f00;
+                color: #161e2d;
+            }
+
+        .timer {
+            font-variant-numeric: tabular-nums;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #173b67;
+            letter-spacing: .04em;
+        }
+
+        .timer-actions .btn {
+            width: 42px;
+            height: 38px;
+        }
+
+        .dropzone {
+            border: 2px dashed #b8cad9;
+            border-radius: 12px;
+            background: #f8fbfd;
+            min-height: 130px;
+        }
+
+        .sticky-actions {
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+            background: rgba(242,243,243,.97);
+            border-top: 1px solid #d5dbdb;
+            padding: 1rem 0;
+            margin-top: 1.25rem;
+        }
+
+        .attachment-preview {
+            width: 100%;
+            max-height: 420px;
+            object-fit: contain;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+
+        .conversation {
             position: relative;
-            font-size: 27px;
+            padding-left: 46px;
         }
 
-        #hms {
-            height: 52px;
-            padding: 0px 0;
-            font-size: 45px;
-            color: #000;
-            font-family: alarm;
+            .conversation:before {
+                content: '';
+                position: absolute;
+                top: 8px;
+                bottom: 8px;
+                left: 18px;
+                width: 2px;
+                background: #d5dbdb;
+            }
+
+        .message-row {
+            position: relative;
+            margin-bottom: 1.1rem;
         }
 
-        .start {
-            cursor: pointer;
+        .message-avatar {
+            position: absolute;
+            left: -46px;
+            top: 0;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            background: #687078;
+            border: 3px solid #f2f3f3;
+            z-index: 1;
         }
 
-        .stop {
-            cursor: pointer;
+        .message-row.client .message-avatar {
+            background: #526d82;
         }
 
-        .reiniciar {
-            cursor: pointer;
+        .message-row.support .message-avatar {
+            background: #0073bb;
+        }
+
+        .message-row.internal .message-avatar {
+            background: #ff9900;
+            color: #161e2d;
+        }
+
+        .message-card {
+            border: 1px solid #d5dbdb;
+            border-radius: 3px;
+            background: #fff;
+        }
+
+        .message-row.support .message-card {
+            border-color: #8ac7e8;
+            border-left: 5px solid #0073bb;
+            background: #f2f9fd;
+        }
+
+        .message-row.client .message-card {
+            border-color: #b8c7d1;
+            border-left: 5px solid #526d82;
+            background: #f5f7f9;
+        }
+
+        .message-row.internal .message-card {
+            border-color: #f3c66d;
+            border-left: 5px solid #ff9900;
+            background: #fff8e7;
+        }
+
+        .message-header {
+            padding: .75rem 1rem;
+            border-bottom: 1px solid #eaeded;
+            background: #fafafa;
+        }
+
+        .message-row.client .message-header {
+            background: #e8eef2;
+            color: #334b5c;
+        }
+
+        .message-row.support .message-header {
+            background: #e5f3fa;
+            color: #00689d;
+        }
+
+        .message-row.internal .message-header {
+            background: #fff0c7;
+            color: #6b4b00;
+        }
+
+        .message-type {
+            display: inline-block;
+            margin-left: .5rem;
+            padding: .16rem .5rem;
+            border-radius: 10px;
+            font-size: .72rem;
+            font-weight: 700;
+        }
+
+        .message-row.client .message-type {
+            background: #526d82;
+            color: #fff;
+        }
+
+        .message-row.support .message-type {
+            background: #0073bb;
+            color: #fff;
+        }
+
+        .message-row.internal .message-type {
+            background: #ff9900;
+            color: #161e2d;
+        }
+
+        .message-body {
+            padding: 1rem;
+            color: #263442;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .message-editor:empty:before {
+            content: attr(data-placeholder);
+            color: #8a949e;
+            pointer-events: none;
+        }
+
+        .message-editor img,
+        .message-body img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: .75rem 0;
+            border-radius: 6px;
         }
     </style>
 }
 
-    @section scripts{
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-    <script src="~/lib/summernote/summernote-bs4.min.js"></script>
-    <script src="~/lib/select2/js/select2.min.js"></script>
-    <script src="~/lib/dropzone/dropzone.js"></script>
-    <script src="~/lib/iCheck/icheck.js"></script>
-
-    <script>
-        $(document).ready(function() {
-  $('#DuracionReal').mask('00:00:00');
-
-        });
-    </script>
-
-
-    <script type="text/javascript">
-        window.onload = init;
-        function init() {
-            document.querySelector(".start").addEventListener("click", cronometrar);
-            document.querySelector(".stop").addEventListener("click", parar);
-            document.querySelector(".reiniciar").addEventListener("click", reiniciar);
-            h = parseInt(document.getElementById("Duracion").value.substring(0, 2));
-            m = parseInt(document.getElementById("Duracion").value.substring(3, 5));
-            s = parseInt(document.getElementById("Duracion").value.substring(6, 8));
-            if (isNaN(s)) {
-                s = 0;
-            }
-            document.getElementById("hms").innerHTML = document.getElementById("Duracion").value;
-        }
-        function cronometrar() {
-            escribir();
-            id = setInterval(escribir, 1000);
-            document.querySelector(".start").removeEventListener("click", cronometrar);
-        }
-        function escribir() {
-            var hAux, mAux, sAux;
-            s++;
-            if (s > 59) { m++; s = 0; }
-            if (m > 59) { h++; m = 0; }
-            if (h > 24) { h = 0; }
-
-            if (s < 10) { sAux = "0" + s; } else { sAux = s; }
-            if (m < 10) { mAux = "0" + m; } else { mAux = m; }
-            if (h < 10) { hAux = "0" + h; } else { hAux = h; }
-
-            document.getElementById("hms").innerHTML = hAux + ":" + mAux + ":" + sAux;
-
-            document.getElementById("Duracion").value = hAux + ":" + mAux + ":" + sAux;
-        }
-        function parar() {
-            clearInterval(id);
-            document.querySelector(".start").addEventListener("click", cronometrar);
-            document.getElementById("Duracion").value = document.getElementById("hms").innerHTML;
-        }
-        function reiniciar() {
-            clearInterval(id);
-            document.getElementById("hms").innerHTML = "00:00:00";
-            h = 0; m = 0; s = 0;
-            document.querySelector(".start").addEventListener("click", cronometrar);
-            document.getElementById("Duracion").value = document.getElementById("hms").innerHTML;
-        }
-    </script>
-    <script>
-
-
-
-        var AdjuntosAnteriores = [];
-        $(document).ready(function() {
-            jQuery(document).ready(function($) {
-                $(document).ready(function() {
-                    $('.mi-selector').select2();
-                });
-            });
-            $(".js-example-responsive").select2({
-                width: 'resolve',// need to override the changed default
-                height: 'resolve'
-            });
-
-
-            var array = $("#Adjunto").val().split("¶");
-            console.log(array);
-
-            for (let i = 0; i < array.length; i++) {
-
-                if (array[i] != "") {
-
-                    AdjuntosAnteriores[i] = array[i];
-                }
-            }
-
-            if (AdjuntosAnteriores[0] != "" && AdjuntosAnteriores[0] != undefined) {
-                $("#src1").prop('src', AdjuntosAnteriores[0]);
-            }
-            if (AdjuntosAnteriores[1] != "" && AdjuntosAnteriores[1] != undefined) {
-                $("#src2").prop('src', AdjuntosAnteriores[1]);
-            }
-
-
-
-        });
-        var Image2Bae64 = "";
-        var ImageBae64 = "";
-        Dropzone.options.dropzoneForm = {
-            paramName: "file", // The name that will be used to transfer the file
-            maxfiles: 2,
-            maxFilesize: 3, // MB
-            thumbnailHeight: 1020,
-            thumbnailWidth: 1020,
-            filesizeBase: 1000,
-            uploadMultiple: false,
-            addRemoveLinks: true,
-            acceptedFiles: ".png, .jpg, .jpeg",
-            dictDefaultMessage: "<strong>Arrastra los archivos. </strong></br> (Da clic para seleccionar el archivo a cargar; máximo 2)",
-            init: function() {
-
-
-
-
-                this.on('addedfile', function(file) {
-
-
-                    if (this.files.length > 2) {
-                        this.removeFile(this.files[0]);
-                    }
-                    ImageBae64 = $(".dz-image").children()[0].src;
-                    if ($(".dz-image").children().length == 2) {
-                        Image2Bae64 = $(".dz-image").children()[1].src;
-                        console.log(Image2Bae64);
-
-                    }
-
-
-
-
-
-                });
-                this.on("complete", function(file) {
-
-                    if ((AdjuntosAnteriores.length + $(".dz-image").children().length) <= 2) {
-                        $(".dz-remove").html("<div><span class='fa fa-trash text-danger' style='font-size: 1.5em'></span></div>");
-                        // ImageBae64 = $(".dz-image").children()[0].src;
-
-                        //if ($(".dz-image").children().length == 2) {
-                        //    Image2Bae64 = $(".dz-image").children()[1].src;
-
-
-                        //}
-
-                        //$("#Adjunto").val(ImageBae64 + "¶" + Image2Bae64);
-                        //var ImagenJunta = ImageBae64 + "¶" + Image2Bae64;
-
-                        //console.log(ImagenJunta);
-                    } else {
-                        if (AdjuntosAnteriores.length == 1) {
-                            this.removeFile(this.files[0]);
-
-                        } else {
-                            this.removeFile(this.files[0]);
-                            this.removeFile(this.files[1]);
-                        }
-                    }
-                    ImageBae64 = $(".dz-image").children()[0].src;
-                    if ($(".dz-image").children().length == 2) {
-                        Image2Bae64 = $(".dz-image").children()[1].src;
-
-
-                    }
-
-                    if (AdjuntosAnteriores[0] != undefined) {
-                        Image2Bae64 = ImageBae64;
-                        ImageBae64 = AdjuntosAnteriores[0];
-                    } else if (AdjuntosAnteriores[0] != undefined && AdjuntosAnteriores[1] != undefined) {
-                        ImageBae64 = AdjuntosAnteriores[0];
-                        Image2Bae64 = AdjuntosAnteriores[1];
-                    }
-
-                    $("#Adjunto").val(ImageBae64 + "¶" + Image2Bae64);
-                });
-            }
-        };
-
-        function abrirModal() {
-            $("#modalAdjuntos").modal("show");
-        }
-        function Cerrar() {
-            $("#modalAdjuntos").modal("hide");
-        }
-
-    </script>
-
-}
-
-    <form method="post" id="formTipos" role="form" novalidate class="needs-validation " enctype="multipart/form-data">
-        <div class="row justify-content-center">
-            <div class="col-lg-11">
-                <div class="card shadow-lg border-0 rounded-lg mt-5">
-                    <div class="card-header"><h4 class="text-center font-weight-light my-4">Detalle Ticket</h4></div>
-                    <div class="card-body">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                        <input hidden asp-for="Tiquete.id" />
-                        <input hidden asp-for="Tiquete.Duracion" id="Duracion" />
-                        <input asp-for="Tiquete.Adjunto" id="Adjunto" hidden />
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <div class="form-floating mb-3 mb-md-0">
-                                    <input class="form-control" id="inputFecha" asp-for="Tiquete.FechaTicket" type="date" readonly />
-                                    <label for="inputFecha">Fecha de Creación</label>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-floating mb-3 mb-md-0">
-                                    <input class="form-control" id="inputFecha" asp-for="Tiquete.PersonaTicket" type="text" readonly />
-                                    <label for="inputFecha">Envio el ticket</label>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-
-                                <div class="cronometro">
-                                    <div id="hms"></div>
-                                    <div class="boton fa fa-play start"></div>
-                                    <div class="boton fa fa-stop stop"></div>
-                                    @if (!string.IsNullOrEmpty(Roles.Where(a => a == "5").FirstOrDefault()))
-                                {
-
-
-                                    <div class="boton fa fa-redo reiniciar"></div>
-                                }
-                                else
-                                {
-                                    <div class="boton fa fa-redo reiniciar" hidden></div>
-                                }
-                            </div>
-                        </div>
-
-
-
-                    </div>
-                    <div class="row mb-3">
-
-
-                        <div class="col-md-12">
-                            <div class="form-floating mb-3 mb-md-0">
-                                <input class="form-control" id="Asunto" asp-for="Tiquete.Asunto" type="text" readonly />
-                                <label for="Asunto">Asunto</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-
-
-                        <div class="col-md-4">
-                            <div class="form-floating mb-3 mb-md-0">
-                                @if (!string.IsNullOrEmpty(Roles.Where(a => a == "3").FirstOrDefault()))
-                                {
-
-
-                                    <select asp-for="Tiquete.idLoginAsignado" id="idUsuario" class="form-control  ">
-                                        <option value="0" selected>-Seleccione usuario-</option>
-                                        @foreach (var item in Model.Usuarios)
-                                        {
-                                            <option value="@item.id">@item.id - @item.Nombre</option>
-                                        }
-                                    </select>
-                                }
-                                else
-                                {
-                                    <input class="form-control" id="Asunto" asp-for="Tiquete.idLoginAsignado" hidden type="text" readonly />
-                                    <input class="form-control" id="Asunto" value="@(Model.Usuarios.Where(a => a.id == Model.Tiquete.idLoginAsignado).FirstOrDefault() == null ? "" : Model.Usuarios.Where(a => a.id == Model.Tiquete.idLoginAsignado).FirstOrDefault().Nombre)" type="text" readonly />
-                                }
-                                <label for="Asunto">Persona a Asignar</label>
-                            </div>
-                        </div>
-
-
-                        <div class="col-md-4">
-                            <div class="form-floating mb-3 mb-md-0">
-                                @if (!string.IsNullOrEmpty(Roles.Where(a => a == "14").FirstOrDefault()))
-                                {
-
-
-                                    <select asp-for="Tiquete.idEmpresa" id="idUsuario" class="form-control  ">
-                                        <option value="0" selected>-Seleccione empresa-</option>
-                                        @foreach (var item in Model.Empresas)
-                                        {
-                                            <option value="@item.id">@item.id - @item.Nombre</option>
-                                        }
-                                    </select>
-                                }
-                                else
-                                {
-                                    <input class="form-control" id="Asunto" asp-for="Tiquete.idEmpresa" hidden type="text" readonly />
-                                    <input class="form-control" id="Asunto" value="@(Model.Empresas.Where(a => a.id == Model.Tiquete.idEmpresa).FirstOrDefault() == null ? "" : Model.Empresas.Where(a => a.id == Model.Tiquete.idEmpresa).FirstOrDefault().Nombre)" type="text" readonly />
-                                }
-                                <label for="Asunto">Empresa</label>
-                            </div>
-
-
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-floating mb-3 mb-md-0">
-                                <input class="form-control" id="DuracionEstimada" asp-for="Tiquete.DuracionEstimada" type="time" />
-                                <label for="DuracionEstimada">Duración Estimada</label>
-                            </div>
-                        </div>
-                    </div>
-                    @if (!string.IsNullOrEmpty(Roles.Where(a => a == "17").FirstOrDefault()))
-                    {
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <div class="form-floating mb-3 mb-md-0">
-                                    <input class="form-control" id="DuracionReal" asp-for="Tiquete.DuracionReal" type="text"   />
-                                    <label for="DuracionReal">Duración Real</label>
-                                </div>
-                            </div>
-
-                        </div>
-                    }
-                    else
-                    {
-                        <input class="form-control" id="DuracionReal" asp-for="Tiquete.DuracionReal" type="text" hidden />
-                    }
-
+<form method="post" id="formTipos" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Tiquete.id" id="TicketId" />
+    <input type="hidden" asp-for="Tiquete.Duracion" id="Duracion" />
+    <input type="hidden" asp-for="Tiquete.Adjunto" id="Adjunto" />
+
+    <main class="support-page">
+
+        <header class="support-header mb-4">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+                <div>
+                    <div class="ticket-number">Solicitud de soporte #@Model.Tiquete.id</div>
+                    <h2 class="mb-1 mt-1">@Model.Tiquete.Asunto</h2>
+                    <div class="mt-2"><span class="case-status">Abierto</span></div>
                 </div>
+                <a asp-page="./Index" class="btn btn-outline-secondary mt-3 mt-md-0">
+                    <i class="fa fa-arrow-left mr-2"></i>Volver a tiquetes
+                </a>
             </div>
-        </div>
-    </div>
+        </header>
 
-
-    <div class="row justify-content-center">
-        <div class="col-lg-6">
-            <div class="card shadow-lg border-0 rounded-lg mt-5">
-
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <div class="form-floating mb-3 mb-md-0">
-                                <textarea class="form-control" id="inputMensaje" style="height: 400px !important;" rows="8" asp-for="Tiquete.Mensaje" readonly></textarea>
-
-                                <label for="inputMensaje">Mensaje</label>
-                            </div>
-                        </div>
-
-
-
-                    </div>
-
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-5">
-            <div class="card shadow-lg border-0 rounded-lg mt-5">
-
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <div class="form-floating mb-3 mb-md-0">
-                                <textarea class="form-control" id="inputComentarios" cols="8" style="height: 300px !important;" asp-for="Tiquete.Comentarios"></textarea>
-
-                                <label for="inputComentarios">Comentarios</label>
-                            </div>
-                        </div>
-
-
-
-                    </div>
-
-                </div>
-            </div>
-        </div>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
         <div class="row">
-            <div class="col-sm-12" style="margin-block-end: 18px;">
-                <div class="d-flex justify-content-end">
-                    <button type="submit" id="Guardar" class="btn btn-w-m btn-primary">Guardar Cambios</button>
-                </div>
+            <div class="col-lg-8">
+                <section class="card support-card mb-4">
+                    <div class="card-header d-flex align-items-center">
+                        <span class="section-icon mr-3"><i class="fa fa-envelope-open"></i></span>
+                        <div><h5 class="mb-0">Solicitud del usuario</h5><small class="text-muted">Mensaje original recibido</small></div>
+                    </div>
+                    <div class="card-body">
+                        <div class="request-box">@Model.Tiquete.Mensaje</div>
+                        <textarea asp-for="Tiquete.Mensaje" hidden readonly></textarea>
+                    </div>
+                </section>
+
+                <section class="card support-card mb-4">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <span class="section-icon mr-3">
+                                <i class="fa fa-comments"></i>
+                            </span>
+                            <div>
+                                <h5 class="mb-0">Historial de respuestas</h5>
+                                <small class="text-muted">Conversación del tiquete</small>
+                            </div>
+                        </div>
+                        <span class="badge badge-secondary" id="contadorRespuestas">
+                            @(Model.Respuestas == null ? 0 : Model.Respuestas.Length)
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="conversation" id="historialRespuestas">
+                            <article class="message-row client">
+                                <div class="message-avatar"><i class="fa fa-user"></i></div>
+                                <div class="message-card">
+                                    <div class="message-header d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>@Model.Tiquete.PersonaTicket</strong>
+                                            <span class="message-type">Cliente</span>
+                                            <div class="small text-muted">Correo original · @Model.Tiquete.Asunto</div>
+                                        </div>
+                                        <small class="text-muted">@Convert.ToDateTime(Model.Tiquete.FechaTicket).ToString("dd/MM/yyyy HH:mm")</small>
+                                    </div>
+                                    <div class="message-body">@Model.Tiquete.Mensaje</div>
+                                </div>
+                            </article>
+
+                            @if (Model.Respuestas != null)
+                            {
+                                @foreach (var item in Model.Respuestas.OrderBy(a => a.FechaCreacion))
+                                {
+                                    var esCliente = item.idUsuario == null || item.idUsuario == 0;
+                                    var usuario = Model.Usuarios == null ? null : Model.Usuarios.FirstOrDefault(a => a.id == item.idUsuario);
+                                    var claseMensaje = item.EsNotaInterna ? "internal" : (esCliente ? "client" : "support");
+                                    var autor = item.EsNotaInterna ? (usuario == null ? "Equipo de soporte" : usuario.Nombre) : (esCliente ? Model.Tiquete.PersonaTicket : (usuario == null ? "Soporte" : usuario.Nombre));
+
+                                    <article class="message-row @claseMensaje">
+                                        <div class="message-avatar">
+                                            <i class="fa @(item.EsNotaInterna ? "fa-lock" : (esCliente ? "fa-user" : "fa-headset"))"></i>
+                                        </div>
+                                        <div class="message-card">
+                                            <div class="message-header d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <strong>@autor</strong>
+                                                    <span class="message-type">
+                                                        @(item.EsNotaInterna ? "Nota interna" : (esCliente ? "Cliente" : "Soporte"))
+                                                    </span>
+                                                </div>
+                                                <small class="text-muted">@item.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</small>
+                                            </div>
+                                            <div class="message-body">@Html.Raw(item.Respuesta)</div>
+                                        </div>
+                                    </article>
+                                }
+                            }
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card support-card reply-card mb-4">
+                    <div class="card-header d-flex align-items-center">
+                        <span class="section-icon mr-3"><i class="fa fa-reply"></i></span>
+                        <div><h5 class="mb-0">Responder solicitud</h5><small class="text-muted">Escribe una respuesta clara para el usuario</small></div>
+                    </div>
+                    <div class="card-body">
+                        <div class="composer-tabs" role="tablist">
+                            <button type="button" class="composer-tab active" data-target="respuestaPanel"><i class="fa fa-paper-plane mr-2"></i>Respuesta al cliente</button>
+                            <button type="button" class="composer-tab" data-target="notasPanel"><i class="fa fa-lock mr-2"></i>Nota interna</button>
+                        </div>
+                        @*       asp-for="Tiquete.Respuesta"
+                        asp-validation-for="Tiquete.Respuesta" *@
+                        <div id="respuestaPanel" class="composer-panel active">
+                            <label for="inputRespuesta" class="font-weight-bold">Respuesta al cliente</label>
+                            <div class="form-control reply-box message-editor"
+                                 id="inputRespuesta"
+                                 contenteditable="true"
+                                 data-placeholder="Escribe tu respuesta. Puedes pegar imágenes con Ctrl+V…"></div>
+                            <span class="text-danger"></span>
+                            <small class="form-text text-muted">Este mensaje sí será visible para el cliente.</small>
+                        </div>
+                        <div id="notasPanel" class="composer-panel">
+                            <div class="alert alert-warning py-2"><i class="fa fa-lock mr-2"></i>Solo el equipo de soporte puede ver esta información.</div>
+                            <label for="inputComentarios" class="font-weight-bold">Nota interna</label>
+                            <input type="hidden" asp-for="Tiquete.Comentarios" />
+                            <textarea class="form-control reply-box" id="inputComentarios"
+                                      placeholder="Agrega contexto, diagnóstico o próximos pasos para el equipo…"></textarea>
+                            <small class="form-text text-muted">La nota se guardará en el historial de respuestas y no será enviada al cliente.</small>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="button" id="EnviarRespuesta" class="btn btn-primary px-4">
+                                <i class="fa fa-paper-plane mr-2"></i>Enviar respuesta
+                            </button>
+                        </div>
+
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="font-weight-bold mb-0">Adjuntar evidencia</label>
+                                <button type="button" class="btn btn-link btn-sm" onclick="abrirModal()">
+                                    <i class="fa fa-paperclip mr-1"></i>Ver adjuntos actuales
+                                </button>
+                            </div>
+                            <div class="dropzone" id="dropzoneForm">
+                                <div class="fallback"><input name="file" type="file" multiple /></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
+
+            <aside class="col-lg-4">
+                <section class="card support-card mb-4">
+                    <div class="card-header"><h5 class="mb-0">Información del tiquete</h5></div>
+                    <div class="card-body">
+                        <div class="mb-3"><span class="meta-label">Creado el</span><input class="form-control" asp-for="Tiquete.FechaTicket" type="date" readonly /></div>
+                        <div class="mb-3"><span class="meta-label">Solicitante</span><input class="form-control" asp-for="Tiquete.PersonaTicket" readonly /></div>
+                        <div class="mb-3"><span class="meta-label">Asunto</span><input class="form-control" asp-for="Tiquete.Asunto" readonly /></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Tiquete.idLoginAsignado" class="meta-label">Agente asignado</label>
+                            @if (puedeAsignar)
+                            {
+                                <select asp-for="Tiquete.idLoginAsignado" class="form-control">
+                                    <option value="0">Seleccione un agente</option>
+                                    @foreach (var item in Model.Usuarios)
+                                    {
+                                        <option value="@item.id">@item.Nombre</option>
+                                    }
+                                </select>
+                            }
+                            else
+                            {
+                                <input asp-for="Tiquete.idLoginAsignado" type="hidden" />
+                                <input class="form-control" value="@(Model.Usuarios.FirstOrDefault(a => a.id == Model.Tiquete.idLoginAsignado)?.Nombre ?? "Sin asignar")" readonly />
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Tiquete.idEmpresa" class="meta-label">Empresa</label>
+                            @if (puedeCambiarEmpresa)
+                            {
+                                <select asp-for="Tiquete.idEmpresa" class="form-control">
+                                    <option value="0">Seleccione una empresa</option>
+                                    @foreach (var item in Model.Empresas)
+                                    {
+                                        <option value="@item.id">@item.Nombre</option>
+                                    }
+                                </select>
+                            }
+                            else
+                            {
+                                <input asp-for="Tiquete.idEmpresa" type="hidden" />
+                                <input class="form-control" value="@(Model.Empresas.FirstOrDefault(a => a.id == Model.Tiquete.idEmpresa)?.Nombre ?? "Sin empresa")" readonly />
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Tiquete.Tipo" class="meta-label">Tipo</label>
+                            <select asp-for="Tiquete.Tipo" class="form-control">
+                                <option value="">Seleccione un tipo</option>
+                                <option value="F">Facturación</option>
+                                <option value="S">SAP</option>
+                                <option value="D">Desarrollo</option>
+                            </select>
+                            <span asp-validation-for="Tiquete.Tipo" class="text-danger"></span>
+                            <small class="form-text text-muted">Este campo es obligatorio para guardar, responder o agregar notas.</small>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card support-card mb-4">
+                    <div class="card-header"><h5 class="mb-0"><i class="fa fa-clock mr-2 text-primary"></i>Tiempo de atención</h5></div>
+                    <div class="card-body text-center">
+                        <div id="hms" class="timer mb-3">00:00:00</div>
+                        <div class="timer-actions mb-4">
+                            <button type="button" class="btn btn-success start" title="Iniciar"><i class="fa fa-play"></i></button>
+                            <button type="button" class="btn btn-danger stop" title="Pausar"><i class="fa fa-stop"></i></button>
+                            @if (puedeReiniciarTiempo)
+                            {
+                                <button type="button" class="btn btn-outline-secondary reiniciar" title="Reiniciar"><i class="fa fa-redo"></i></button>
+                            }
+                        </div>
+                        <div class="text-left mb-3"><label asp-for="Tiquete.DuracionEstimada" class="meta-label">Duración estimada</label><input class="form-control" asp-for="Tiquete.DuracionEstimada" type="time" /></div>
+                        @if (puedeEditarDuracionReal)
+                        {
+                            <div class="text-left"><label asp-for="Tiquete.DuracionReal" class="meta-label">Duración real</label><input class="form-control" id="DuracionReal" asp-for="Tiquete.DuracionReal" /></div>
+                        }
+                        else
+                        {
+                            <input type="hidden" id="DuracionReal" asp-for="Tiquete.DuracionReal" />
+                        }
+                    </div>
+                </section>
+
+            </aside>
         </div>
 
-    </div>
-    <DIV id="dropzone">
-        <h4 class="text-center font-weight-light my-4">Agregar Adjuntos</h4>
-        <h5 class="text-center font-weight-light my-4" onclick="javascript: abrirModal();" style="color: #0d6efd; text-decoration: underline; cursor:pointer;">Ver Adjuntos</h5>
-        <div class="dropzone" id="dropzoneForm">
-            <div class="fallback">
-                <input name="file" type="file" multiple />
+        <div class="sticky-actions">
+            <div class="d-flex justify-content-end">
+                <a asp-page="./Index" class="btn btn-light mr-2">Cancelar</a>
+                <button type="button" id="GuardarCambios" class="btn btn-amazon px-4">
+                    <i class="fa fa-save mr-2"></i>Guardar cambios
+                </button>
             </div>
         </div>
-    </DIV>
-
-
+    </main>
 </form>
 
-
-<!--Modal de adjuntos-->
-<!-- Modal -->
-<div class="modal fade" id="modalAdjuntos" role="dialog">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade" id="modalAdjuntos" tabindex="-1" role="dialog" aria-labelledby="tituloAdjuntos" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header"><h5 class="modal-title" id="tituloAdjuntos">Adjuntos del tiquete</h5><button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button></div>
+            <div class="modal-body"><div class="row"><div class="col-md-6 mb-3"><img src="" class="attachment-preview" id="src1" alt="Primer adjunto" /></div><div class="col-md-6 mb-3"><img src="" class="attachment-preview" id="src2" alt="Segundo adjunto" /></div></div></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button></div>
+        </div>
+    </div>
+</div>
 
-                <h4 class="  text-center font-weight-light my-4">Adjuntos</h4>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-
-                    <div class="col-sm-6" style="text-align: center;">
-
-
-                        <img src="" style="width: 100%; height: 100%; border: 1px solid #ccc; padding: 3px; " id="src1" width="100" height='50' />
-
-
-
-                    </div>
-                    <div class="col-sm-6" style="text-align: center;">
-
-
-                        <img src="" style="width: 100%; height: 100%; border: 1px solid #ccc; padding: 3px;" id="src2" width="100" height='50' />
-
-
-
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" onclick="javascript: Cerrar();">Close</button>
+<div class="modal fade" id="modalResultado" tabindex="-1" role="dialog" aria-labelledby="resultadoTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <i id="resultadoIcono" class="fa fa-check-circle text-success" style="font-size:4rem"></i>
+                <h4 id="resultadoTitulo" class="mt-3 mb-2">Operación completada</h4>
+                <p id="resultadoMensaje" class="text-muted mb-4"></p>
+                <button type="button" class="btn btn-primary px-4" id="CerrarModalResultado">Aceptar</button>
             </div>
         </div>
     </div>
 </div>
+
+@section scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script src="~/lib/dropzone/dropzone.js"></script>
+    <script src="~/js/Tickets/EditarTicket.js"></script>
+}
+
+

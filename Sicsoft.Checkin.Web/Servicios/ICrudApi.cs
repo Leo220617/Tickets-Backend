@@ -17,6 +17,8 @@ namespace Sicsoft.Checkin.Web.Servicios
         Task EnviarCorreo([Body] TEntity payload);
 
 
+        [Get("/EnviarCorreo")]
+        Task ReenvioCorreo(int id);
         [Post("")]
         Task<TEntity[]> AgregarBulk([Body] TEntity[] payload);
 

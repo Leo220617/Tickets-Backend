@@ -2,6 +2,7 @@
 using Sicsoft.Checkin.Web.Models;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Sicsoft.Checkin.Web.Servicios
@@ -84,6 +85,8 @@ namespace Sicsoft.Checkin.Web.Servicios
         [Delete("/Eliminar")]
         Task EliminarEjecutivo (int idEjecutivo);
 
- 
+
+        [Get("/LeerRespuestasTicket")]
+        Task<HttpResponseMessage> LeerRespuestasTicket(int id);
     }
 }

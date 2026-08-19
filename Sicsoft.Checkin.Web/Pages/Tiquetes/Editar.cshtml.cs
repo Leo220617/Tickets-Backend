@@ -54,7 +54,15 @@ namespace Tickets.Pages.Tiquetes
 
                 if (id != 0)
                 {
-                    var filtro = new ParametrosFiltros { Codigo1 = id };
+                    // Primero revisar si el cliente respondió.
+                    await service.LeerRespuestasTicket(id);
+
+                    // Después consultar las respuestas actualizadas.
+                    var filtro = new ParametrosFiltros
+                    {
+                        Codigo1 = id
+                    };
+
                     Adj = await serviceAdj.ObtenerLista(filtro);
                     Respuestas = await respuestas.ObtenerLista(filtro);
                 }
@@ -127,9 +135,10 @@ namespace Tickets.Pages.Tiquetes
 
         // Guarda una respuesta o nota. Solo las respuestas se envían por correo.
         public async Task<IActionResult> OnPostResponderAsync(
-            int idTicket,
-            string texto,
-            bool esNotaInterna)
+      int idTicket,
+      string texto,
+      bool esNotaInterna,
+      string nuevoStatus)
         {
             try
             {
@@ -140,11 +149,32 @@ namespace Tickets.Pages.Tiquetes
                     return BadRequest(new { ok = false, mensaje = "Debe seleccionar el tipo del ticket antes de guardar una respuesta o nota interna." });
 
                 if (string.IsNullOrWhiteSpace(texto))
-                    return BadRequest(new { ok = false, mensaje = "Escriba un mensaje antes de continuar." });
+                {
+                    return BadRequest(new
+                    {
+                        ok = false,
+                        mensaje = "Escriba un mensaje antes de continuar."
+                    });
+                }
+
+                if (!esNotaInterna)
+                {
+                    if (nuevoStatus != "V" && nuevoStatus != "C")
+                    {
+                        return BadRequest(new
+                        {
+                            ok = false,
+                            mensaje = "Debe seleccionar Validación o Cerrado."
+                        });
+                    }
+
+                    Tiquete.Status = nuevoStatus;
+                }
 
                 var claimId = ((ClaimsIdentity)User.Identity).Claims
-                    .FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-
+                    .FirstOrDefault(c =>
+                        c.Type == ClaimTypes.NameIdentifier
+                    )?.Value;
                 if (!int.TryParse(claimId, out var idUsuario))
                     return Unauthorized();
 

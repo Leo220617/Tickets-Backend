@@ -119,9 +119,27 @@
 
         .reply-box {
             min-height: 240px !important;
-            resize: vertical;
+            height: auto !important;
             border-radius: 10px;
         }
+
+        .message-editor {
+            display: block;
+            width: 100%;
+            min-height: 240px !important;
+            height: auto !important;
+            overflow: visible;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+            .message-editor img {
+                display: block;
+                max-width: 100%;
+                height: auto;
+                margin: 12px 0;
+                border-radius: 6px;
+            }
 
         .reply-card {
             border-top: 3px solid #ff9900;
@@ -648,6 +666,7 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
     <script src="~/lib/dropzone/dropzone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/js/Tickets/EditarTicket.js"></script>
 }
 

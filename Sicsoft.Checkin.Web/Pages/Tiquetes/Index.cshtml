@@ -322,18 +322,17 @@
                                     }
                             }
                             <td>
-                                @if (item.Status != "C")
-                                {
+                              
                                     <a asp-page="./Editar" asp-route-id="@item.id" title="Editar" class="fa fa-edit icono">  </a>
 
-                                }
+                               
                                 &nbsp;
                                 @if (!string.IsNullOrEmpty(Roles.Where(a => a == "2").FirstOrDefault()))
                                 {
                                     <a onclick="javascript: onClickModal('@item.id')" title="Abrir/Cerrar" class="fa fa-eraser icono">   </a>
                                 }
-                                &nbsp;
-                                <a asp-page="./Observar" asp-route-id="@item.id" title="Observar" class="fa fa-eye icono" style="color: yellow;">  </a>
+                              @*   &nbsp;
+                                <a asp-page="./Observar" asp-route-id="@item.id" title="Observar" class="fa fa-eye icono" style="color: yellow;">  </a> *@
                             </td>
 
                         </tr>

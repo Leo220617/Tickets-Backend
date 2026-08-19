@@ -144,8 +144,13 @@
             document.execCommand(
                 'insertHTML',
                 false,
-                `<img src="${dataUrl}" alt="Imagen pegada" style="display:block;max-width:100%;height:auto;margin:12px 0" /><br>`
+                `<img src="${dataUrl}" alt="Imagen pegada" style="display:block;max-width:100%;height:auto;margin:12px 0" /><div><br></div>`
             );
+
+            editor[0].scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
+            });
         } catch (error) {
             mostrarResultado(false, 'No se pudo pegar la imagen', error.message);
         }
@@ -198,39 +203,124 @@
         contador.text((parseInt(contador.text(), 10) || 0) + 1);
     }
 
-    function enviarRespuesta() {
+    async function enviarRespuesta() {
         const boton = $('#EnviarRespuesta');
-        const selector = modoNotaInterna ? '#inputComentarios' : '#inputRespuesta';
+        const selector = modoNotaInterna
+            ? '#inputComentarios'
+            : '#inputRespuesta';
+
         const texto = contenidoEditor(selector);
 
         if (!validarTipo()) return;
 
         if (!texto) {
-            mostrarResultado(false, 'Mensaje requerido', 'Escriba un mensaje antes de continuar.');
+            mostrarResultado(
+                false,
+                'Mensaje requerido',
+                'Escriba un mensaje antes de continuar.'
+            );
+
             $(selector).focus();
             return;
         }
 
-        bloquearBoton(boton, true, modoNotaInterna ? 'Guardando…' : 'Enviando…');
+        let nuevoStatus = '';
+
+        // Solo preguntar cuando es una respuesta al cliente.
+        if (!modoNotaInterna) {
+            const resultado = await Swal.fire({
+                icon: 'question',
+                title: 'Estado del tiquete',
+                text: '¿A qué estado desea pasar el tiquete?',
+                input: 'select',
+                inputOptions: {
+                    V: 'Validación',
+                    C: 'Cerrado'
+                },
+                inputPlaceholder: 'Seleccione un estado',
+                showCancelButton: true,
+                confirmButtonText: 'Enviar respuesta',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+
+                inputValidator: function (valor) {
+                    if (!valor) {
+                        return 'Debe seleccionar un estado.';
+                    }
+                }
+            });
+
+            if (!resultado.isConfirmed) {
+                return;
+            }
+
+            nuevoStatus = resultado.value;
+        }
+
+        bloquearBoton(
+            boton,
+            true,
+            modoNotaInterna ? 'Guardando…' : 'Enviando…'
+        );
 
         const datos = $('#formTipos').serializeArray();
-        datos.push({ name: 'idTicket', value: $('#TicketId').val() });
-        datos.push({ name: 'texto', value: texto });
-        datos.push({ name: 'esNotaInterna', value: modoNotaInterna });
+
+        datos.push({
+            name: 'idTicket',
+            value: $('#TicketId').val()
+        });
+
+        datos.push({
+            name: 'texto',
+            value: texto
+        });
+
+        datos.push({
+            name: 'esNotaInterna',
+            value: modoNotaInterna
+        });
+
+        datos.push({
+            name: 'nuevoStatus',
+            value: nuevoStatus
+        });
 
         $.ajax({
             url: `${window.location.pathname}?handler=Responder`,
             method: 'POST',
             data: datos
-        }).done(function (data) {
-            limpiarEditor(selector);
-            agregarAlHistorial(data.respuesta);
-            mostrarResultado(true, modoNotaInterna ? 'Nota guardada' : 'Respuesta enviada', data.mensaje);
-        }).fail(function (xhr) {
-            mostrarResultado(false, 'No se completó la operación', mensajeError(xhr));
-        }).always(function () {
-            bloquearBoton(boton, false);
-        });
+        })
+            .done(function (data) {
+                limpiarEditor(selector);
+                agregarAlHistorial(data.respuesta);
+
+                if (!modoNotaInterna && nuevoStatus) {
+                    $('.case-status').text(
+                        nuevoStatus === 'V'
+                            ? 'Validación'
+                            : 'Cerrado'
+                    );
+                }
+
+                mostrarResultado(
+                    true,
+                    modoNotaInterna
+                        ? 'Nota guardada'
+                        : 'Respuesta enviada',
+                    data.mensaje
+                );
+            })
+            .fail(function (xhr) {
+                mostrarResultado(
+                    false,
+                    'No se completó la operación',
+                    mensajeError(xhr)
+                );
+            })
+            .always(function () {
+                bloquearBoton(boton, false);
+            });
     }
 
     function guardarTicket() {

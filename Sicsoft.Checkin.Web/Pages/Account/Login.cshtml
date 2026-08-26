@@ -5,69 +5,681 @@
 }
 
 <!DOCTYPE html>
-
-<html>
+<html lang="es">
 <head>
-    <meta name="viewport" content="width=device-width" />
-    <title>Inicio de Sesión</title>
-    <link rel="icon" type="image/png" href="images/icons/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inicio de sesión | Tickets</title>
 
+    <link rel="icon" type="image/png" href="~/img/icon.png" />
     <link rel="stylesheet" href="~/css/styles.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+
+    <style>
+        :root {
+            --pg-navy: #131e29;
+            --pg-navy-soft: #1f3042;
+            --pg-orange: #ff9900;
+            --pg-orange-dark: #e47911;
+            --pg-blue: #0073bb;
+            --pg-blue-dark: #005b99;
+            --pg-page: #f2f3f3;
+            --pg-surface: #ffffff;
+            --pg-border: #d5dbdb;
+            --pg-border-dark: #aab7b8;
+            --pg-text: #16191f;
+            --pg-muted: #5f6b7a;
+            --pg-danger: #d13212;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+            margin: 0;
+        }
+
+            body.pg-login-body {
+                background: var(--pg-page);
+                color: var(--pg-text);
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            }
+
+        .pg-login-layout {
+            display: grid;
+            grid-template-columns: minmax(360px, 44%) 1fr;
+            min-height: 100vh;
+        }
+
+        .pg-login-brand {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            min-height: 100vh;
+            padding: 42px 48px 34px;
+            background: radial-gradient( circle at 85% 20%, rgba(0, 161, 201, .22), transparent 34% ), linear-gradient(145deg, var(--pg-navy-soft), var(--pg-navy));
+            color: #ffffff;
+        }
+
+            .pg-login-brand::before {
+                content: "";
+                position: absolute;
+                right: -145px;
+                bottom: -165px;
+                width: 430px;
+                height: 430px;
+                border: 58px solid rgba(255, 153, 0, .10);
+                border-radius: 50%;
+            }
+
+            .pg-login-brand::after {
+                content: "";
+                position: absolute;
+                right: 50px;
+                bottom: 90px;
+                width: 120px;
+                height: 4px;
+                border-radius: 4px;
+                background: var(--pg-orange);
+            }
+
+        .pg-brand-header,
+        .pg-brand-content,
+        .pg-brand-footer {
+            position: relative;
+            z-index: 1;
+        }
+
+        .pg-brand-header {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .pg-brand-mark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 46px;
+            height: 46px;
+            border: 1px solid rgba(255, 255, 255, .18);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, .07);
+            color: var(--pg-orange);
+            font-size: 20px;
+        }
+
+        .pg-brand-name {
+            margin: 0;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: .025em;
+        }
+
+        .pg-brand-caption {
+            margin-top: 3px;
+            color: #aab7b8;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .09em;
+            text-transform: uppercase;
+        }
+
+        .pg-brand-content {
+            max-width: 540px;
+            margin: auto 0;
+            padding: 54px 0;
+        }
+
+        .pg-brand-eyebrow {
+            margin-bottom: 12px;
+            color: var(--pg-orange);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: .13em;
+            text-transform: uppercase;
+        }
+
+        .pg-brand-title {
+            max-width: 520px;
+            margin: 0;
+            color: #ffffff;
+            font-size: clamp(34px, 4vw, 52px);
+            font-weight: 750;
+            line-height: 1.08;
+            letter-spacing: -.025em;
+        }
+
+        .pg-brand-description {
+            max-width: 500px;
+            margin: 20px 0 0;
+            color: #d5dbdb;
+            font-size: 16px;
+            line-height: 1.65;
+        }
+
+        .pg-feature-list {
+            display: grid;
+            gap: 12px;
+            margin: 30px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+            .pg-feature-list li {
+                display: flex;
+                align-items: center;
+                gap: 11px;
+                color: #e7ecef;
+                font-size: 14px;
+                font-weight: 600;
+            }
+
+        .pg-feature-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 27px;
+            width: 27px;
+            height: 27px;
+            border: 1px solid rgba(255, 153, 0, .30);
+            border-radius: 50%;
+            background: rgba(255, 153, 0, .10);
+            color: var(--pg-orange);
+            font-size: 11px;
+        }
+
+        .pg-brand-footer {
+            color: #879596;
+            font-size: 12px;
+        }
+
+        .pg-login-main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            min-height: 100vh;
+            padding: 38px 28px;
+            background: linear-gradient( 180deg, rgba(255, 255, 255, .84), rgba(242, 243, 243, .94) );
+        }
+
+        .pg-login-container {
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .pg-mobile-brand {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+            .pg-mobile-brand .pg-brand-mark {
+                width: 40px;
+                height: 40px;
+                background: var(--pg-navy);
+            }
+
+            .pg-mobile-brand .pg-brand-name {
+                color: var(--pg-text);
+                font-size: 16px;
+            }
+
+            .pg-mobile-brand .pg-brand-caption {
+                color: var(--pg-muted);
+            }
+
+        .pg-login-card {
+            overflow: hidden;
+            border: 1px solid var(--pg-border);
+            border-radius: 9px;
+            background: var(--pg-surface);
+            box-shadow: 0 4px 18px rgba(19, 30, 41, .13);
+        }
+
+        .pg-login-card-accent {
+            height: 4px;
+            background: linear-gradient( 90deg, var(--pg-orange), var(--pg-orange-dark) );
+        }
+
+        .pg-login-card-header {
+            padding: 30px 34px 20px;
+        }
+
+        .pg-login-eyebrow {
+            margin: 0 0 7px;
+            color: var(--pg-blue-dark);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+
+        .pg-login-title {
+            margin: 0;
+            color: var(--pg-text);
+            font-size: 26px;
+            font-weight: 750;
+            letter-spacing: -.015em;
+        }
+
+        .pg-login-subtitle {
+            margin: 9px 0 0;
+            color: var(--pg-muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .pg-login-card-body {
+            padding: 6px 34px 32px;
+        }
+
+        .pg-field {
+            margin-bottom: 20px;
+        }
+
+        .pg-label {
+            display: block;
+            margin-bottom: 7px;
+            color: #34465a;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .pg-input-wrap {
+            position: relative;
+        }
+
+        .pg-input-icon {
+            position: absolute;
+            z-index: 2;
+            top: 50%;
+            left: 14px;
+            color: #687684;
+            font-size: 14px;
+            pointer-events: none;
+            transform: translateY(-50%);
+        }
+
+        .pg-form-control {
+            width: 100%;
+            min-height: 46px;
+            padding: 10px 14px 10px 42px;
+            border: 1px solid var(--pg-border-dark);
+            border-radius: 5px;
+            background: #ffffff;
+            color: var(--pg-text);
+            font-size: 14px;
+            outline: none;
+            box-shadow: inset 0 1px 2px rgba(19, 30, 41, .05);
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+            .pg-form-control::placeholder {
+                color: #879596;
+            }
+
+            .pg-form-control:focus {
+                border-color: var(--pg-blue);
+                box-shadow: 0 0 0 3px rgba(0, 115, 187, .16);
+            }
+
+        .pg-password-toggle {
+            position: absolute;
+            z-index: 3;
+            top: 50%;
+            right: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            border: 0;
+            border-radius: 4px;
+            background: transparent;
+            color: #687684;
+            cursor: pointer;
+            transform: translateY(-50%);
+        }
+
+            .pg-password-toggle:hover,
+            .pg-password-toggle:focus {
+                background: #eaeded;
+                color: var(--pg-blue-dark);
+                outline: none;
+            }
+
+        .pg-password-input {
+            padding-right: 48px;
+        }
+
+        .pg-validation {
+            margin-bottom: 18px;
+            padding: 0;
+            color: var(--pg-danger);
+            font-size: 13px;
+        }
+
+            .pg-validation:empty {
+                display: none;
+            }
+
+            .pg-validation ul {
+                margin: 0;
+                padding: 10px 13px 10px 31px;
+                border: 1px solid #f3b4a4;
+                border-radius: 5px;
+                background: #fff3f0;
+            }
+
+        .pg-form-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 1px 0 23px;
+        }
+
+        .pg-check {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #34465a;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+            .pg-check input {
+                width: 16px;
+                height: 16px;
+                margin: 0;
+                accent-color: var(--pg-blue);
+            }
+
+        .pg-submit {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            width: 100%;
+            min-height: 46px;
+            padding: 10px 18px;
+            border: 1px solid var(--pg-orange-dark);
+            border-radius: 5px;
+            background: linear-gradient(#ffad33, var(--pg-orange));
+            color: #111820;
+            font-size: 14px;
+            font-weight: 750;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(19, 30, 41, .12);
+            transition: background .15s ease, box-shadow .15s ease;
+        }
+
+            .pg-submit:hover,
+            .pg-submit:focus {
+                background: linear-gradient(#ffa41c, #f08804);
+                box-shadow: 0 2px 5px rgba(19, 30, 41, .17);
+                outline: none;
+            }
+
+        .pg-login-help {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            margin-top: 20px;
+            padding: 13px 14px;
+            border: 1px solid #b8d8eb;
+            border-radius: 5px;
+            background: #eef7fc;
+            color: #34465a;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+            .pg-login-help i {
+                margin-top: 2px;
+                color: var(--pg-blue);
+            }
+
+        .pg-login-footer {
+            margin-top: 22px;
+            color: var(--pg-muted);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        @@media (max-width: 900px) {
+            .pg-login-layout {
+                display: block;
+            }
+
+            .pg-login-brand {
+                display: none;
+            }
+
+            .pg-login-main {
+                min-height: 100vh;
+                padding: 28px 18px;
+            }
+
+            .pg-mobile-brand {
+                display: flex;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .pg-login-main {
+                align-items: flex-start;
+                padding: 20px 12px;
+            }
+
+            .pg-login-card-header {
+                padding: 25px 22px 18px;
+            }
+
+            .pg-login-card-body {
+                padding: 4px 22px 25px;
+            }
+
+            .pg-login-title {
+                font-size: 23px;
+            }
+        }
+    </style>
 </head>
- 
-<body class="bg-secondary">
-    <div id="layoutAuthentication">
-        <div id="layoutAuthentication_content">
-            <main>
-                <div class="container">
-                    <div class="row justify-content-center">
-                        <div class="col-lg-5">
-                            <div class="card shadow-lg border-0 rounded-lg mt-5">
-                                <div class="card-header"><h3 class="text-center font-weight-light my-4">Login</h3></div>
-                                <div class="card-body">
-                                    <form method="post" id="formTipos" role="form" novalidate class="login100-form validate-form p-l-55 p-r-55 p-t-178 needs-validation " enctype="multipart/form-data">
-                                        <div class="form-floating mb-3">
-                                            <input class="form-control" id="inputEmail" asp-for="Input.Email" type="email" required placeholder="name@example.com" />
-                                            <label for="inputEmail">Correo Electrónico</label>
-                                        </div>
-                                        <div class="form-floating mb-3">
-                                            <input class="form-control" id="inputPassword" type="password" asp-for="Input.Password" required placeholder="Password" />
-                                            <label for="inputPassword">Contraseña</label>
-                                        </div>
-                                        <div asp-validation-summary="All" style="text-align: center;" class="text-danger"></div>
-                                        <div class="form-check mb-3">
-                                            <input class="form-check-input" id="inputRememberPassword" type="checkbox" value="" />
-                                            <label class="form-check-label" for="inputRememberPassword">Recordarme</label>
-                                        </div>
-                                        <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
-                                            <a class="small" href="password.html"> </a>
-                                            <button class="btn btn-primary" type="submit">Iniciar Sesión</button>
-                                        </div>
-                                    </form>
+
+<body class="pg-login-body">
+    <div class="pg-login-layout">
+        <aside class="pg-login-brand" aria-label="Información del sistema">
+            <div class="pg-brand-header">
+                <span class="pg-brand-mark">
+                    <i class="fas fa-headset"></i>
+                </span>
+                <div>
+                    <h1 class="pg-brand-name">Support Center</h1>
+                    <div class="pg-brand-caption">D&amp;D Consultores</div>
+                </div>
+            </div>
+
+            <div class="pg-brand-content">
+                <div class="pg-brand-eyebrow">Administración de servicio</div>
+                <h2 class="pg-brand-title">
+                    Atención y seguimiento en un solo lugar.
+                </h2>
+                <p class="pg-brand-description">
+                    Ingresa al centro de soporte para consultar, administrar y dar
+                    seguimiento a los tiquetes de tus clientes.
+                </p>
+
+                <ul class="pg-feature-list">
+                    <li>
+                        <span class="pg-feature-icon"><i class="fas fa-check"></i></span>
+                        Gestión centralizada de solicitudes
+                    </li>
+                    <li>
+                        <span class="pg-feature-icon"><i class="fas fa-check"></i></span>
+                        Seguimiento de estados y tiempos
+                    </li>
+                    <li>
+                        <span class="pg-feature-icon"><i class="fas fa-check"></i></span>
+                        Comunicación directa con clientes
+                    </li>
+                </ul>
+            </div>
+
+            <div class="pg-brand-footer">
+                Plataforma segura de administración de soporte
+            </div>
+        </aside>
+
+        <main class="pg-login-main">
+            <div class="pg-login-container">
+                <div class="pg-mobile-brand">
+                    <span class="pg-brand-mark">
+                        <i class="fas fa-headset"></i>
+                    </span>
+                    <div>
+                        <div class="pg-brand-name">Support Center</div>
+                        <div class="pg-brand-caption">D&amp;D Consultores</div>
+                    </div>
+                </div>
+
+                <section class="pg-login-card" aria-labelledby="loginTitle">
+                    <div class="pg-login-card-accent"></div>
+
+                    <header class="pg-login-card-header">
+                        <div class="pg-login-eyebrow">Acceso seguro</div>
+                        <h2 class="pg-login-title" id="loginTitle">Iniciar sesión</h2>
+                        <p class="pg-login-subtitle">
+                            Utiliza las credenciales asignadas a tu cuenta.
+                        </p>
+                    </header>
+
+                    <div class="pg-login-card-body">
+                        <form method="post"
+                              id="formTipos"
+                              role="form"
+                              novalidate
+                              class="needs-validation"
+                              enctype="multipart/form-data">
+
+                            <div asp-validation-summary="All"
+                                 class="text-danger pg-validation"></div>
+
+                            <div class="pg-field">
+                                <label class="pg-label" for="inputEmail">
+                                    Correo electrónico
+                                </label>
+                                <div class="pg-input-wrap">
+                                    <i class="fas fa-envelope pg-input-icon"></i>
+                                    <input class="pg-form-control"
+                                           id="inputEmail"
+                                           asp-for="Input.Email"
+                                           type="email"
+                                           required
+                                           autocomplete="username"
+                                           placeholder="nombre@empresa.com" />
                                 </div>
-                                
                             </div>
-                        </div>
+
+                            <div class="pg-field">
+                                <label class="pg-label" for="inputPassword">
+                                    Contraseña
+                                </label>
+                                <div class="pg-input-wrap">
+                                    <i class="fas fa-lock pg-input-icon"></i>
+                                    <input class="pg-form-control pg-password-input"
+                                           id="inputPassword"
+                                           asp-for="Input.Password"
+                                           type="password"
+                                           required
+                                           autocomplete="current-password"
+                                           placeholder="Ingresa tu contraseña" />
+
+                                    <button type="button"
+                                            class="pg-password-toggle"
+                                            id="togglePassword"
+                                            title="Mostrar contraseña"
+                                            aria-label="Mostrar contraseña">
+                                        <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="pg-form-options">
+                                <label class="pg-check" for="inputRememberPassword">
+                                    <input id="inputRememberPassword"
+                                           name="Recordarme"
+                                           type="checkbox"
+                                           value="true" />
+                                    <span>Recordarme</span>
+                                </label>
+                            </div>
+
+                            <button class="pg-submit" type="submit">
+                                <i class="fas fa-sign-in-alt"></i>
+                                Iniciar sesión
+                            </button>
+
+                            <div class="pg-login-help">
+                                <i class="fas fa-info-circle"></i>
+                                <span>
+                                    Si no puedes acceder, solicita ayuda al administrador
+                                    del sistema.
+                                </span>
+                            </div>
+                        </form>
                     </div>
-                </div>
-            </main>
-        </div>
-        <div id="layoutAuthentication_footer">
-            <footer class="py-4 bg-light mt-auto">
-                <div class="container-fluid px-4">
-                    <div class="d-flex align-items-center justify-content-between small">
-                        <div class="text-muted">Copyright &copy; Tickets 2021</div>
-                         
-                    </div>
-                </div>
-            </footer>
-        </div>
+                </section>
+
+                <footer class="pg-login-footer">
+                    © @DateTime.Now.Year Tickets, D&amp;D Consultores.
+                    Todos los derechos reservados.
+                </footer>
+            </div>
+        </main>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+            crossorigin="anonymous"></script>
     <script src="~/js/scripts.js"></script>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <partial name="_ValidationScriptsPartial" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10.15.5/dist/sweetalert2.all.min.js"></script>
+
+    <script>
+        (function () {
+            var password = document.getElementById('inputPassword');
+            var button = document.getElementById('togglePassword');
+            var icon = document.getElementById('togglePasswordIcon');
+
+            if (!password || !button || !icon) {
+                return;
+            }
+
+            button.addEventListener('click', function () {
+                var mostrar = password.type === 'password';
+
+                password.type = mostrar ? 'text' : 'password';
+                icon.className = mostrar ? 'fas fa-eye-slash' : 'fas fa-eye';
+                button.title = mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña';
+                button.setAttribute(
+                    'aria-label',
+                    mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña'
+                );
+            });
+        })();
+    </script>
 </body>
 </html>

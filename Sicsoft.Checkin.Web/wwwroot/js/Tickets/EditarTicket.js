@@ -3,43 +3,119 @@
 
     Dropzone.autoDiscover = false;
 
-    let timerId = null;
-    let h = 0;
-    let m = 0;
-    let s = 0;
+
     let modoNotaInterna = false;
     let autoGuardadoTimer = null;
 
-    function pad(value) {
-        return String(value).padStart(2, '0');
+    let segundosAcumulados = 0;
+
+    function convertirASegundos(valor) {
+        const partes = (valor || '00:00:00').split(':');
+
+        const horas = parseInt(partes[0], 10) || 0;
+        const minutos = parseInt(partes[1], 10) || 0;
+        const segundos = parseInt(partes[2], 10) || 0;
+
+        return (horas * 3600) + (minutos * 60) + segundos;
     }
 
-    function paintTimer() {
-        const value = `${pad(h)}:${pad(m)}:${pad(s)}`;
-        $('#hms').text(value);
-        $('#Duracion').val(value);
+    function convertirAFormatoTiempo(totalSegundos) {
+        totalSegundos = Math.max(0, totalSegundos);
+
+        const horas = Math.floor(totalSegundos / 3600);
+        const minutos = Math.floor(
+            (totalSegundos % 3600) / 60
+        );
+
+        return String(horas).padStart(2, '0') +
+            ':' +
+            String(minutos).padStart(2, '0') +
+            ':00';
     }
 
-    function startTimer() {
-        if (timerId) return;
-        timerId = window.setInterval(function () {
-            s++;
-            if (s > 59) { s = 0; m++; }
-            if (m > 59) { m = 0; h++; }
-            paintTimer();
-        }, 1000);
+    function mostrarTiempoAcumulado() {
+        const horas = Math.floor(segundosAcumulados / 3600);
+        const minutos = Math.floor(
+            (segundosAcumulados % 3600) / 60
+        );
+
+        $('#TiempoAcumulado').text(
+            horas + (horas === 1 ? ' hora ' : ' horas ') +
+            minutos + (minutos === 1 ? ' minuto' : ' minutos')
+        );
     }
 
-    function stopTimer() {
-        window.clearInterval(timerId);
-        timerId = null;
-        paintTimer();
+    function validarNumeroTiempo(selector, maximo, nombre) {
+        const valor = parseInt($(selector).val(), 10);
+
+        if (isNaN(valor) || valor < 0 || valor > maximo) {
+            mostrarResultado(
+                false,
+                'Tiempo no válido',
+                nombre + ' debe estar entre 0 y ' + maximo + '.'
+            );
+
+            $(selector).focus();
+            return false;
+        }
+
+        return true;
     }
 
-    function resetTimer() {
-        stopTimer();
-        h = 0; m = 0; s = 0;
-        paintTimer();
+    function prepararTiempos() {
+        if (!validarNumeroTiempo(
+            '#TiempoHoras',
+            999,
+            'Las horas invertidas'
+        )) {
+            return false;
+        }
+
+        if (!validarNumeroTiempo(
+            '#TiempoMinutos',
+            59,
+            'Los minutos invertidos'
+        )) {
+            return false;
+        }
+
+        if (!validarNumeroTiempo(
+            '#EstimadoHoras',
+            999,
+            'Las horas estimadas'
+        )) {
+            return false;
+        }
+
+        if (!validarNumeroTiempo(
+            '#EstimadoMinutos',
+            59,
+            'Los minutos estimados'
+        )) {
+            return false;
+        }
+
+        return true;
+    }
+    function confirmarTiempoGuardado(data) {
+        if (data && data.duracion) {
+            $('#Duracion').val(data.duracion);
+            $('#DuracionReal').val(data.duracion);
+
+            segundosAcumulados =
+                convertirASegundos(data.duracion);
+        }
+
+        if (data && data.duracionEstimada) {
+            $('#DuracionEstimada').val(
+                data.duracionEstimada
+            );
+        }
+
+        $('#TiempoHoras').val(0);
+        $('#TiempoMinutos').val(0);
+
+        mostrarTiempoAcumulado();
     }
 
     function mostrarResultado(exito, titulo, mensaje) {
@@ -92,7 +168,57 @@
         return $('<div>').text(valor || '').html();
     }
 
+    function obtenerDestinatarios() {
+        return ($('#DestinatariosRespuesta').val() || '')
+            .split(/[;,]+/)
+            .map(function (correo) {
+                return correo.trim();
+            })
+            .filter(function (correo) {
+                return correo.length > 0;
+            })
+            .filter(function (correo, indice, lista) {
+                return lista.findIndex(function (elemento) {
+                    return elemento.toLowerCase() === correo.toLowerCase();
+                }) === indice;
+            });
+    }
 
+    function correoValido(correo) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+    }
+
+    function validarDestinatarios() {
+        const destinatarios = obtenerDestinatarios();
+
+        if (destinatarios.length === 0) {
+            mostrarResultado(
+                false,
+                'Destinatario requerido',
+                'Debe ingresar al menos un correo electrónico.'
+            );
+
+            $('#DestinatariosRespuesta').focus();
+            return false;
+        }
+
+        const invalidos = destinatarios.filter(function (correo) {
+            return !correoValido(correo);
+        });
+
+        if (invalidos.length > 0) {
+            mostrarResultado(
+                false,
+                'Correo no válido',
+                'Revise los siguientes correos: ' + invalidos.join(', ')
+            );
+
+            $('#DestinatariosRespuesta').focus();
+            return false;
+        }
+
+        return true;
+    }
     function contenidoEditor(selector) {
         const editor = $(selector);
         return editor.is('[contenteditable]')
@@ -205,13 +331,16 @@
 
     async function enviarRespuesta() {
         const boton = $('#EnviarRespuesta');
+
         const selector = modoNotaInterna
             ? '#inputComentarios'
             : '#inputRespuesta';
 
         const texto = contenidoEditor(selector);
 
-        if (!validarTipo()) return;
+        if (!validarTipo()) {
+            return;
+        }
 
         if (!texto) {
             mostrarResultado(
@@ -224,9 +353,13 @@
             return;
         }
 
+        if (!modoNotaInterna && !validarDestinatarios()) {
+            return;
+        }
+
         let nuevoStatus = '';
 
-        // Solo preguntar cuando es una respuesta al cliente.
+        // Solo solicitar un estado cuando se envía una respuesta al cliente.
         if (!modoNotaInterna) {
             const resultado = await Swal.fire({
                 icon: 'question',
@@ -258,10 +391,17 @@
             nuevoStatus = resultado.value;
         }
 
+        // Calcula el nuevo tiempo acumulado después de confirmar.
+        if (!prepararTiempos()) {
+            return;
+        }
+
         bloquearBoton(
             boton,
             true,
-            modoNotaInterna ? 'Guardando…' : 'Enviando…'
+            modoNotaInterna
+                ? 'Guardando…'
+                : 'Enviando…'
         );
 
         const datos = $('#formTipos').serializeArray();
@@ -292,22 +432,56 @@
             data: datos
         })
             .done(function (data) {
-                limpiarEditor(selector);
-                agregarAlHistorial(data.respuesta);
+                // Actualiza el acumulado y limpia horas/minutos ingresados.
+                confirmarTiempoGuardado(data);
 
-                if (!modoNotaInterna && nuevoStatus) {
-                    $('.case-status').text(
-                        nuevoStatus === 'V'
-                            ? 'Validación'
-                            : 'Cerrado'
+                limpiarEditor(selector);
+
+                // Las notas internas permanecen en esta página.
+                if (modoNotaInterna) {
+                    agregarAlHistorial(data.respuesta);
+
+                    mostrarResultado(
+                        true,
+                        'Nota guardada',
+                        data.mensaje
                     );
+
+                    return;
                 }
+
+                // Después de enviar y cambiar a Validación o Cerrado,
+                // regresar al listado de tiquetes.
+                if (nuevoStatus === 'V' ||
+                    nuevoStatus === 'C') {
+
+                    const mensajeEstado =
+                        nuevoStatus === 'V'
+                            ? 'El tiquete pasó a Validación.'
+                            : 'El tiquete fue cerrado correctamente.';
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Respuesta enviada',
+                        text: mensajeEstado,
+                        showConfirmButton: false,
+                        timer: 1200,
+                        timerProgressBar: true,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false
+                    }).then(function () {
+                        window.location.href =
+                            $('#UrlIndexTiquetes').val();
+                    });
+
+                    return;
+                }
+
+                agregarAlHistorial(data.respuesta);
 
                 mostrarResultado(
                     true,
-                    modoNotaInterna
-                        ? 'Nota guardada'
-                        : 'Respuesta enviada',
+                    'Respuesta enviada',
                     data.mensaje
                 );
             })
@@ -325,21 +499,45 @@
 
     function guardarTicket() {
         const boton = $('#GuardarCambios');
-        if (!validarTipo()) return;
 
-        bloquearBoton(boton, true, 'Guardando…');
+        if (!validarTipo()) {
+            return;
+        }
+
+        if (!prepararTiempos()) {
+            return;
+        }
+
+        bloquearBoton(
+            boton,
+            true,
+            'Guardando…'
+        );
 
         $.ajax({
             url: `${window.location.pathname}?handler=Guardar`,
             method: 'POST',
             data: $('#formTipos').serialize()
-        }).done(function (data) {
-            mostrarResultado(true, 'Cambios guardados', data.mensaje);
-        }).fail(function (xhr) {
-            mostrarResultado(false, 'No se guardaron los cambios', mensajeError(xhr));
-        }).always(function () {
-            bloquearBoton(boton, false);
-        });
+        })
+            .done(function (data) {
+                confirmarTiempoGuardado(data);
+
+                mostrarResultado(
+                    true,
+                    'Cambios guardados',
+                    data.mensaje
+                );
+            })
+            .fail(function (xhr) {
+                mostrarResultado(
+                    false,
+                    'No se guardaron los cambios',
+                    mensajeError(xhr)
+                );
+            })
+            .always(function () {
+                bloquearBoton(boton, false);
+            });
     }
 
     function guardarCamposAutomaticamente() {
@@ -372,48 +570,566 @@
             });
         }, 350);
     }
+    function aplicarIconoAdjunto(archivo) {
+        if (!archivo || !archivo.previewElement) {
+            return;
+        }
 
+        const nombre = archivo.name || '';
+        const extension = (
+            nombre.split('.').pop() || ''
+        ).toLowerCase();
+
+        let claseIcono = 'fa fa-file-o';
+        let claseColor = 'default';
+
+        switch (extension) {
+            case 'pdf':
+                claseIcono = 'fa fa-file-pdf-o';
+                claseColor = 'pdf';
+                break;
+
+            case 'xls':
+            case 'xlsx':
+                claseIcono = 'fa fa-file-excel-o';
+                claseColor = 'excel';
+                break;
+
+            case 'doc':
+            case 'docx':
+                claseIcono = 'fa fa-file-word-o';
+                claseColor = 'word';
+                break;
+
+            case 'csv':
+                claseIcono = 'fa fa-file-text-o';
+                claseColor = 'csv';
+                break;
+
+            case 'png':
+            case 'jpg':
+            case 'jpeg':
+                claseIcono = 'fa fa-file-image-o';
+                claseColor = 'image';
+                break;
+        }
+
+        const contenedor =
+            archivo.previewElement.querySelector(
+                '.dz-image'
+            );
+
+        if (contenedor) {
+            contenedor.innerHTML =
+                '<i class="' +
+                claseIcono +
+                ' dz-file-icon ' +
+                claseColor +
+                '" aria-hidden="true"></i>';
+        }
+
+        const nombreElemento =
+            archivo.previewElement.querySelector(
+                '.dz-filename span'
+            );
+
+        if (nombreElemento) {
+            nombreElemento.title = nombre;
+        }
+    }
     function configurarAdjuntos() {
-        const previous = ($('#Adjunto').val() || '').split('¶').filter(Boolean);
-        previous.forEach(function (url, index) {
-            $('#src' + (index + 1)).attr('src', url);
-        });
+        const permitidos =
+            '.png,.jpg,.jpeg,.pdf,.xls,.xlsx,.doc,.docx,.csv';
+
+        const limiteTotalBytes = 18 * 1024 * 1024;
+        const maximoArchivos = 5;
+
+        const anteriores = ($('#Adjunto').val() || '')
+            .split('¶')
+            .filter(function (contenido) {
+                return contenido &&
+                    contenido.trim().length > 0;
+            });
+
+        function calcularTamanoDataUrl(contenido) {
+            if (!contenido) {
+                return 0;
+            }
+
+            const posicionComa = contenido.indexOf(',');
+
+            if (posicionComa < 0) {
+                return 0;
+            }
+
+            const base64 = contenido
+                .substring(posicionComa + 1)
+                .replace(/\s/g, '');
+
+            if (!base64.length) {
+                return 0;
+            }
+
+            let relleno = 0;
+
+            if (base64.endsWith('==')) {
+                relleno = 2;
+            } else if (base64.endsWith('=')) {
+                relleno = 1;
+            }
+
+            return Math.floor(
+                (base64.length * 3) / 4
+            ) - relleno;
+        }
+
+        function calcularTamanoTotal(contenidos) {
+            return contenidos.reduce(
+                function (total, contenido) {
+                    return total +
+                        calcularTamanoDataUrl(contenido);
+                },
+                0
+            );
+        }
+
+        function formatearMegabytes(bytes) {
+            return (
+                bytes / (1024 * 1024)
+            ).toFixed(2);
+        }
+
+        function obtenerArchivosNuevos(dropzone) {
+            return dropzone.files
+                .map(function (archivo) {
+                    return archivo.contenidoCompleto;
+                })
+                .filter(function (contenido) {
+                    return contenido &&
+                        contenido.length > 0;
+                });
+        }
+
+        function actualizarAdjuntos(dropzone) {
+            const nuevos =
+                obtenerArchivosNuevos(dropzone);
+
+            const todos = anteriores
+                .concat(nuevos)
+                .slice(0, maximoArchivos);
+
+            $('#Adjunto').val(
+                todos.join('¶')
+            );
+
+            mostrarListaAdjuntos(todos);
+        }
+
+        const tamanoAnterior =
+            calcularTamanoTotal(anteriores);
+
+        mostrarListaAdjuntos(anteriores);
+
+        if (anteriores.length >= maximoArchivos) {
+            $('#dropzoneForm').addClass('d-none');
+
+            $('<div>', {
+                class: 'alert alert-info',
+                text:
+                    'Este tiquete ya tiene el máximo de ' +
+                    maximoArchivos +
+                    ' archivos.'
+            }).insertAfter('#dropzoneForm');
+
+            return;
+        }
+
+        if (tamanoAnterior >= limiteTotalBytes) {
+            $('#dropzoneForm').addClass('d-none');
+
+            $('<div>', {
+                class: 'alert alert-warning',
+                text:
+                    'Los archivos actuales ya alcanzan el límite de 18 MB.'
+            }).insertAfter('#dropzoneForm');
+
+            return;
+        }
 
         new Dropzone('#dropzoneForm', {
             url: window.location.href,
             autoProcessQueue: false,
-            maxFiles: Math.max(0, 2 - previous.length),
-            maxFilesize: 3,
-            acceptedFiles: '.png,.jpg,.jpeg',
+
+            maxFiles: Math.max(
+                0,
+                maximoArchivos - anteriores.length
+            ),
+
+            // Límite individual controlado por Dropzone.
+            maxFilesize: 18,
+
+            acceptedFiles: permitidos,
             addRemoveLinks: true,
-            dictDefaultMessage: '<strong>Arrastra imágenes aquí</strong><br>o haz clic para seleccionarlas (máximo 2)',
+
+            dictDefaultMessage:
+                '<i class="fa fa-cloud-upload" style="font-size:30px;color:#0073bb"></i><br>' +
+                '<strong>Haz clic o arrastra tus archivos aquí</strong><br>' +
+                '<span>PDF, Excel, Word, CSV, PNG o JPG</span><br>' +
+                '<small>Máximo 5 archivos y 18 MB en total</small>',
+
             dictRemoveFile: 'Eliminar',
+
+            dictInvalidFileType:
+                'Este tipo de archivo no está permitido.',
+
+            dictFileTooBig:
+                'El archivo supera el límite permitido de 18 MB.',
+
+            dictMaxFilesExceeded:
+                'Solamente se permiten 5 archivos.',
+
             init: function () {
-                const actualizar = () => {
-                    const nuevas = this.files.map(file => file.dataURL).filter(Boolean);
-                    $('#Adjunto').val(previous.concat(nuevas).slice(0, 2).join('¶'));
-                };
-                this.on('addedfile', actualizar);
-                this.on('thumbnail', actualizar);
-                this.on('removedfile', actualizar);
+                const dropzone = this;
+
+                this.on('addedfile', function (archivo) {
+                    aplicarIconoAdjunto(archivo);
+                    // Dropzone puede agregar primero el archivo y
+                    // después marcarlo como inválido.
+                    if (archivo.size > limiteTotalBytes) {
+                        dropzone.removeFile(archivo);
+
+                        mostrarResultado(
+                            false,
+                            'Archivo demasiado grande',
+                            'El archivo ' +
+                            archivo.name +
+                            ' supera el límite de 18 MB.'
+                        );
+
+                        return;
+                    }
+
+                    const tamanoOtrosNuevos =
+                        dropzone.files
+                            .filter(function (item) {
+                                return item !== archivo &&
+                                    !item.rechazadoPorTamano;
+                            })
+                            .reduce(function (total, item) {
+                                return total + (item.size || 0);
+                            }, 0);
+
+                    const totalProyectado =
+                        tamanoAnterior +
+                        tamanoOtrosNuevos +
+                        archivo.size;
+
+                    if (totalProyectado > limiteTotalBytes) {
+                        archivo.rechazadoPorTamano = true;
+                        dropzone.removeFile(archivo);
+
+                        mostrarResultado(
+                            false,
+                            'Límite total superado',
+                            'No se puede agregar ' +
+                            archivo.name +
+                            '. El total sería de ' +
+                            formatearMegabytes(
+                                totalProyectado
+                            ) +
+                            ' MB y el máximo permitido es 18 MB.'
+                        );
+
+                        return;
+                    }
+
+                    const lector = new FileReader();
+
+                    lector.onload = function (evento) {
+                        const dataUrl =
+                            evento.target.result;
+
+                        const posicionComa =
+                            dataUrl.indexOf(',');
+
+                        if (posicionComa < 0) {
+                            dropzone.removeFile(archivo);
+
+                            mostrarResultado(
+                                false,
+                                'Archivo no válido',
+                                'No fue posible procesar ' +
+                                archivo.name
+                            );
+
+                            return;
+                        }
+
+                        const base64 =
+                            dataUrl.substring(
+                                posicionComa + 1
+                            );
+
+                        const tipo =
+                            archivo.type ||
+                            obtenerTipoContenido(
+                                archivo.name
+                            );
+
+                        archivo.contenidoCompleto =
+                            'data:' + tipo +
+                            ';name=' +
+                            encodeURIComponent(
+                                archivo.name
+                            ) +
+                            ';base64,' +
+                            base64;
+
+                        actualizarAdjuntos(dropzone);
+                    };
+
+                    lector.onerror = function () {
+                        dropzone.removeFile(archivo);
+
+                        mostrarResultado(
+                            false,
+                            'Archivo no válido',
+                            'No fue posible leer ' +
+                            archivo.name
+                        );
+                    };
+
+                    lector.readAsDataURL(archivo);
+                });
+
+                this.on('removedfile', function () {
+                    actualizarAdjuntos(dropzone);
+                });
             }
         });
     }
 
-    window.abrirModal = function () {
-        $('#modalAdjuntos').modal('show');
+    function obtenerTipoContenido(nombre) {
+        const extension = (nombre.split('.').pop() || '')
+            .toLowerCase();
+
+        const tipos = {
+            pdf: 'application/pdf',
+            xls: 'application/vnd.ms-excel',
+            xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            doc: 'application/msword',
+            docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            csv: 'text/csv',
+            png: 'image/png',
+            jpg: 'image/jpeg',
+            jpeg: 'image/jpeg'
+        };
+
+        return tipos[extension] || 'application/octet-stream';
+    }
+
+    function mostrarListaAdjuntos(adjuntos) {
+        const contenedor = $('#listaAdjuntos');
+        contenedor.empty();
+
+        if (!adjuntos.length) {
+            contenedor.html(
+                '<div class="text-muted text-center py-4">' +
+                '<i class="fa fa-paperclip mr-2"></i>' +
+                'No hay archivos adjuntos.' +
+                '</div>'
+            );
+
+            return;
+        }
+
+        adjuntos.forEach(function (contenido, indice) {
+            const informacion = leerInformacionAdjunto(
+                contenido,
+                indice
+            );
+
+            const elemento = $('<a>', {
+                href: contenido,
+                download: informacion.nombre,
+                class: 'archivo-adjunto',
+                title: 'Descargar ' + informacion.nombre
+            });
+
+            elemento.append(
+                $('<span>', {
+                    class: 'archivo-icono'
+                }).append(
+                    $('<i>', {
+                        class: informacion.icono
+                    })
+                )
+            );
+
+            elemento.append(
+                $('<span>', {
+                    class: 'archivo-nombre',
+                    text: informacion.nombre
+                })
+            );
+
+            elemento.append(
+                $('<i>', {
+                    class: 'fa fa-download archivo-descarga'
+                })
+            );
+
+            contenedor.append(elemento);
+        });
+    }
+
+    function leerInformacionAdjunto(contenido, indice) {
+        const coincidencia = contenido.match(
+            /^data:([^;]+)(?:;name=([^;]+))?;base64,/i
+        );
+
+        let tipo = '';
+        let nombre = 'Adjunto_' + (indice + 1);
+
+        if (coincidencia) {
+            tipo = coincidencia[1] || '';
+
+            if (coincidencia[2]) {
+                nombre = decodeURIComponent(coincidencia[2]);
+            }
+        }
+
+        let icono = 'fa fa-file-o';
+
+        if (tipo.indexOf('pdf') >= 0) {
+            icono = 'fa fa-file-pdf-o';
+        } else if (
+            tipo.indexOf('excel') >= 0 ||
+            tipo.indexOf('spreadsheet') >= 0 ||
+            tipo.indexOf('csv') >= 0
+        ) {
+            icono = 'fa fa-file-excel-o';
+        } else if (
+            tipo.indexOf('word') >= 0 ||
+            tipo.indexOf('document') >= 0
+        ) {
+            icono = 'fa fa-file-word-o';
+        } else if (tipo.indexOf('image/') === 0) {
+            icono = 'fa fa-file-image-o';
+        }
+
+        return {
+            nombre: nombre,
+            tipo: tipo,
+            icono: icono
+        };
+    }
+
+    window.abrirModalAdjuntos = function () {
+        const modal = $('#modalAdjuntos');
+
+        // Bootstrap 4 con jQuery.
+        if (
+            $.fn.modal &&
+            typeof modal.modal === 'function'
+        ) {
+            modal.modal({
+                backdrop: true,
+                keyboard: true,
+                show: true
+            });
+
+            return;
+        }
+
+        // Bootstrap 5 sin jQuery.
+        if (
+            window.bootstrap &&
+            window.bootstrap.Modal
+        ) {
+            const elemento =
+                document.getElementById(
+                    'modalAdjuntos'
+                );
+
+            const instancia =
+                window.bootstrap.Modal.getOrCreateInstance
+                    ? window.bootstrap.Modal.getOrCreateInstance(
+                        elemento
+                    )
+                    : new window.bootstrap.Modal(
+                        elemento
+                    );
+
+            instancia.show();
+            return;
+        }
+
+        console.error(
+            'No se encontró el componente Modal de Bootstrap.'
+        );
+    };
+
+    window.cerrarModalAdjuntos = function () {
+        const modal = $('#modalAdjuntos');
+
+        // Bootstrap 4 con jQuery.
+        if (
+            $.fn.modal &&
+            typeof modal.modal === 'function'
+        ) {
+            modal.modal('hide');
+            return;
+        }
+
+        // Bootstrap 5 sin jQuery.
+        if (
+            window.bootstrap &&
+            window.bootstrap.Modal
+        ) {
+            const elemento =
+                document.getElementById(
+                    'modalAdjuntos'
+                );
+
+            const instancia =
+                window.bootstrap.Modal.getInstance
+                    ? window.bootstrap.Modal.getInstance(
+                        elemento
+                    )
+                    : null;
+
+            if (instancia) {
+                instancia.hide();
+            }
+
+            return;
+        }
+
+        // Respaldo visual.
+        modal.removeClass('show').hide();
+        $('body').removeClass('modal-open');
+        $('.modal-backdrop').remove();
     };
 
     $(function () {
-        const duration = ($('#Duracion').val() || '00:00:00').split(':');
-        h = parseInt(duration[0], 10) || 0;
-        m = parseInt(duration[1], 10) || 0;
-        s = parseInt(duration[2], 10) || 0;
-        paintTimer();
+        segundosAcumulados = convertirASegundos(
+            $('#Duracion').val()
+        );
 
-        $('.start').on('click', startTimer);
-        $('.stop').on('click', stopTimer);
-        $('.reiniciar').on('click', resetTimer);
+        mostrarTiempoAcumulado();
+
+        const estimadoInicial = convertirASegundos(
+            $('#DuracionEstimada').val()
+        );
+
+        $('#EstimadoHoras').val(
+            Math.floor(estimadoInicial / 3600)
+        );
+
+        $('#EstimadoMinutos').val(
+            Math.floor((estimadoInicial % 3600) / 60)
+        );
 
         $('.composer-tab').on('click', function () {
             const target = $(this).data('target');
@@ -436,6 +1152,135 @@
 
         configurarAdjuntos();
         configurarPegadoImagenes();
+    });
+    $(document).on('click', '#UnificarTiquete', async function () {
+        const ticketPrincipalId =
+            parseInt($('#TicketId').val(), 10);
+
+        if (!ticketPrincipalId) {
+            Swal.fire(
+                'Error',
+                'No fue posible identificar el tiquete principal.',
+                'error'
+            );
+
+            return;
+        }
+
+        const resultado = await Swal.fire({
+            icon: 'info',
+            title: 'Unificar tiquetes',
+            html:
+                '<p>El tiquete <strong>#' +
+                ticketPrincipalId +
+                '</strong> permanecerá como principal.</p>' +
+                '<p>Digite el número del tiquete que desea incorporar.</p>',
+            input: 'number',
+            inputPlaceholder: 'Número del tiquete secundario',
+            inputAttributes: {
+                min: '1',
+                step: '1'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Continuar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#7b3fb4',
+            inputValidator: function (valor) {
+                const ticketSecundarioId =
+                    parseInt(valor, 10);
+
+                if (!ticketSecundarioId ||
+                    ticketSecundarioId <= 0) {
+                    return 'Digite un número de tiquete válido.';
+                }
+
+                if (ticketSecundarioId ===
+                    ticketPrincipalId) {
+                    return 'No puede unificar el tiquete consigo mismo.';
+                }
+
+                return null;
+            }
+        });
+
+        if (!resultado.isConfirmed) {
+            return;
+        }
+
+        const ticketSecundarioId =
+            parseInt(resultado.value, 10);
+
+        const confirmacion = await Swal.fire({
+            icon: 'warning',
+            title: '¿Confirmar unificación?',
+            html:
+                'El tiquete <strong>#' +
+                ticketSecundarioId +
+                '</strong> será cerrado y su historial será movido al ' +
+                'tiquete principal <strong>#' +
+                ticketPrincipalId +
+                '</strong>.',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, unificar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#7b3fb4'
+        });
+
+        if (!confirmacion.isConfirmed) {
+            return;
+        }
+
+        Swal.fire({
+            title: 'Unificando tiquetes',
+            text: 'Por favor espere...',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: function () {
+                Swal.showLoading();
+            }
+        });
+
+        const token = $('#formTipos input[name="__RequestVerificationToken"]')
+            .val();
+
+        $.ajax({
+            url: window.location.pathname + '?handler=Unificar',
+            method: 'POST',
+            data: {
+                __RequestVerificationToken: token,
+                ticketPrincipalId: ticketPrincipalId,
+                ticketSecundarioId: ticketSecundarioId
+            }
+        })
+            .done(function (respuesta) {
+                if (!respuesta || !respuesta.ok) {
+                    Swal.fire(
+                        'No se pudo unificar',
+                        respuesta && respuesta.mensaje
+                            ? respuesta.mensaje
+                            : 'No fue posible completar la operación.',
+                        'error'
+                    );
+
+                    return;
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Tiquetes unificados',
+                    text: respuesta.mensaje,
+                    confirmButtonColor: '#0073bb'
+                }).then(function () {
+                    window.location.reload();
+                });
+            })
+            .fail(function (xhr) {
+                Swal.fire(
+                    'Error',
+                    mensajeError(xhr),
+                    'error'
+                );
+            });
     });
 })(jQuery);
 

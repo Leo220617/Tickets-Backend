@@ -1,220 +1,898 @@
 ﻿@page
-@model IndexModel
+@model Sicsoft.Checkin.Web.Pages.IndexModel
+@using Newtonsoft.Json
+@using System
+@using System.Linq
+
 @{
-    ViewData["Title"] = "Inicio";
-    var Roles = ((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == "Roles").Select(s1 => s1.Value).FirstOrDefault().Split("|");
+    ViewData["Title"] = "Dashboard";
+
+    var dashboard = Model.Dashboard ?? new Tickets.Models.DashboardTicketsViewModel();
+    var usuarios = Model.Usuarios ?? Array.Empty<InversionGloblalWeb.Models.UsuariosViewModel>();
+
+    var tendenciaJson = JsonConvert.SerializeObject(dashboard.Tendencia);
+    var estadosJson = JsonConvert.SerializeObject(dashboard.Estados);
+    var tiposJson = JsonConvert.SerializeObject(dashboard.Tipos);
+    var antiguedadJson = JsonConvert.SerializeObject(dashboard.Antiguedad);
+    var consultoresJson = JsonConvert.SerializeObject(dashboard.Consultores);
+    var empresasJson = JsonConvert.SerializeObject(dashboard.Empresas);
 }
 
-
-@using System.Globalization;
-@{
-    NumberFormatInfo formato = new CultureInfo("en-US").NumberFormat;
-    formato.CurrencyGroupSeparator = ",";
-    formato.NumberDecimalSeparator = ".";
-
-
-}
-
-
-@section styles{
-    <link rel="stylesheet" href="~/lib/summernote/summernote-bs4.css" />
-    <link rel="stylesheet" href="~/lib/select2/css/select2.min.css" />
-    <link rel="stylesheet" href="~/lib/select2/css/select2-bootstrap4.min.css" />
-    <link href="~/lib/dropzone/basic.css" rel="stylesheet" />
-    <link href="~/lib/dropzone/dropzone.css" rel="stylesheet" />
-    <link href="~/lib/iCheck/skins/square/green.css" rel="stylesheet" />
-    <link href="~/lib/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet" />
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jasny-bootstrap/4.0.0/css/jasny-bootstrap.min.css">
+@section styles {
     <style>
-        .tableFixHead th {
-            position: sticky;
-            top: 0;
-            background: white;
+        :root {
+            --db-navy: #131e29;
+            --db-navy-soft: #1f3042;
+            --db-orange: #ff9900;
+            --db-blue: #0073bb;
+            --db-blue-dark: #005b99;
+            --db-green: #1f7a45;
+            --db-yellow: #9b5d00;
+            --db-red: #b12704;
+            --db-purple: #6b4ea0;
+            --db-border: #d5dbdb;
+            --db-text: #16191f;
+            --db-muted: #5f6b7a;
+            --db-surface: #ffffff;
+        }
+
+        .db-page {
+            width: 100%;
+            padding: 2px;
+        }
+
+        .db-hero {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 14px;
+            padding: 19px 22px;
+            border-radius: 8px;
+            background: linear-gradient(125deg, var(--db-navy), var(--db-navy-soft));
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(19, 30, 41, .16);
+        }
+
+            .db-hero::after {
+                content: "";
+                position: absolute;
+                right: -45px;
+                bottom: -82px;
+                width: 190px;
+                height: 190px;
+                border: 30px solid rgba(255, 153, 0, .13);
+                border-radius: 50%;
+            }
+
+        .db-hero-copy,
+        .db-period {
+            position: relative;
+            z-index: 1;
+        }
+
+        .db-eyebrow {
+            margin-bottom: 3px;
+            color: #aab7b8;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .11em;
+            text-transform: uppercase;
+        }
+
+        .db-title {
+            margin: 0;
+            color: #fff !important;
+            font-size: 24px;
+            font-weight: 750;
+        }
+
+        .db-subtitle {
+            margin: 5px 0 0;
+            color: #d5dbdb;
+            font-size: 13px;
+        }
+
+        .db-period {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 9px 12px;
+            border: 1px solid rgba(255, 255, 255, .16);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, .07);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+            .db-period i {
+                color: var(--db-orange);
+            }
+
+        .db-card {
+            margin-bottom: 14px;
+            border: 1px solid var(--db-border);
+            border-radius: 7px;
+            background: var(--db-surface);
+            box-shadow: 0 1px 2px rgba(19, 30, 41, .07);
+        }
+
+        .db-filter {
+            padding: 14px 16px;
+        }
+
+        .db-filter-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(150px, 1fr));
+            gap: 11px;
+            align-items: end;
+        }
+
+        .db-field label {
+            display: block;
+            margin-bottom: 5px;
+            color: #34465a;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .db-field .form-control {
+            width: 100%;
+            min-height: 39px;
+            border: 1px solid #aab7b8;
+            border-radius: 4px;
+            background: #fff;
+            color: var(--db-text);
+            font-size: 13px;
+        }
+
+        .db-search {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            width: 100%;
+            min-height: 39px;
+            border: 1px solid #e47911;
+            border-radius: 4px;
+            background: linear-gradient(#ffad33, var(--db-orange));
+            color: #111820;
+            font-size: 13px;
+            font-weight: 750;
+            cursor: pointer;
+        }
+
+        .db-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .db-kpi {
+            position: relative;
+            overflow: hidden;
+            min-height: 122px;
+            padding: 16px;
+            border: 1px solid var(--db-border);
+            border-top: 4px solid var(--kpi-color, var(--db-blue));
+            border-radius: 7px;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(19, 30, 41, .07);
+        }
+
+        .db-kpi-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .db-kpi-label {
+            color: var(--db-muted);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .035em;
+            text-transform: uppercase;
+        }
+
+        .db-kpi-value {
+            margin-top: 8px;
+            color: var(--db-text);
+            font-size: 27px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .db-kpi-note {
+            margin-top: 9px;
+            color: var(--db-muted);
+            font-size: 11px;
+        }
+
+        .db-kpi-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 36px;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            background: color-mix(in srgb, var(--kpi-color, var(--db-blue)) 11%, white);
+            color: var(--kpi-color, var(--db-blue));
+            font-size: 16px;
+        }
+
+        .db-grid-2 {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+            gap: 14px;
+        }
+
+        .db-grid-equal {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .db-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 51px;
+            padding: 11px 15px;
+            border-bottom: 1px solid var(--db-border);
+        }
+
+        .db-card-title {
+            margin: 0;
+            color: var(--db-text);
+            font-size: 14px;
+            font-weight: 750;
+        }
+
+        .db-card-description {
+            margin-top: 2px;
+            color: var(--db-muted);
+            font-size: 11px;
+        }
+
+        .db-card-body {
+            padding: 13px 15px;
+        }
+
+        .db-chart {
+            position: relative;
+            height: 280px;
+        }
+
+        .db-chart-small {
+            height: 245px;
+        }
+
+        .db-table-wrap {
+            overflow-x: auto;
+        }
+
+        .db-table {
+            width: 100%;
+            margin: 0;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+            .db-table th {
+                padding: 10px 11px;
+                border-bottom: 1px solid #aab7b8;
+                background: #eaeded;
+                color: #34465a;
+                font-size: 10px;
+                font-weight: 800;
+                letter-spacing: .04em;
+                text-align: left;
+                text-transform: uppercase;
+                white-space: nowrap;
+            }
+
+            .db-table td {
+                padding: 10px 11px;
+                border-bottom: 1px solid #eaeded;
+                color: var(--db-text);
+                vertical-align: middle;
+            }
+
+            .db-table tbody tr:hover {
+                background: #f7fafa;
+            }
+
+        .db-number {
+            font-weight: 750;
+            text-align: right;
+        }
+
+        .db-ticket-link {
+            color: var(--db-blue-dark);
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .db-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 7px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 750;
+            white-space: nowrap;
+        }
+
+            .db-status::before {
+                content: "";
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: currentColor;
+            }
+
+        .db-status-a {
+            background: #edf8f1;
+            color: var(--db-green);
+        }
+
+        .db-status-v {
+            background: #fff8e8;
+            color: var(--db-yellow);
+        }
+
+        .db-status-e {
+            background: #eef7fc;
+            color: var(--db-blue-dark);
+        }
+
+        .db-status-c {
+            background: #eaeded;
+            color: #59636e;
+        }
+
+        .db-empty {
+            padding: 28px !important;
+            color: var(--db-muted) !important;
+            text-align: center;
+        }
+
+        @@media (max-width: 1200px) {
+            .db-filter-grid,
+            .db-kpi-grid {
+                grid-template-columns: repeat(2, minmax(180px, 1fr));
+            }
+
+            .db-grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .db-hero {
+                display: block;
+            }
+
+            .db-period {
+                margin-top: 13px;
+            }
+
+            .db-filter-grid,
+            .db-kpi-grid,
+            .db-grid-equal {
+                grid-template-columns: 1fr;
+            }
+
+            .db-chart,
+            .db-chart-small {
+                height: 255px;
+            }
         }
     </style>
-
 }
-@section scripts{
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    <script src="~/lib/summernote/summernote-bs4.min.js"></script>
-    <script src="~/lib/select2/js/select2.min.js"></script>
-    <script src="~/lib/dropzone/dropzone.js"></script>
-    <script src="~/lib/iCheck/icheck.js"></script>
-    <script src="~/js/plugins/dataTables/datatables.min.js"></script>
-    <script src="~/js/plugins/dataTables/dataTables.bootstrap4.min.js"></script>
-    <script>
-        $(document).ready(function () {
-            jQuery(document).ready(function ($) {
 
+<div class="db-page">
+    <header class="db-hero">
+        <div class="db-hero-copy">
+            <div class="db-eyebrow">Centro de soporte</div>
+            <h1 class="db-title">Dashboard de tiquetes</h1>
+            <p class="db-subtitle">
+                Rendimiento, carga operativa y comportamiento de las solicitudes.
+            </p>
+        </div>
+
+        <div class="db-period">
+            <i class="fa fa-calendar"></i>
+            @Model.filtro.FechaInicial.ToString("dd/MM/yyyy")
+            —
+            @Model.filtro.FechaFinal.ToString("dd/MM/yyyy")
+        </div>
+    </header>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            @Html.ValidationSummary(false)
+        </div>
+    }
+
+    <section class="db-card db-filter" aria-label="Filtros del dashboard">
+        <form method="get">
+            <div class="db-filter-grid">
+                <div class="db-field">
+                    <label asp-for="filtro.FechaInicial">Fecha inicial</label>
+                    <input asp-for="filtro.FechaInicial" type="date" class="form-control" />
+                </div>
+
+                <div class="db-field">
+                    <label asp-for="filtro.FechaFinal">Fecha final</label>
+                    <input asp-for="filtro.FechaFinal" type="date" class="form-control" />
+                </div>
+
+                @if (Model.PuedeFiltrarUsuario)
+                {
+                    <div class="db-field">
+                        <label asp-for="filtro.Codigo1">Consultor</label>
+                        <select asp-for="filtro.Codigo1" class="form-control">
+                            <option value="0">Todos los consultores</option>
+                            @foreach (var usuario in usuarios)
+                            {
+                                <option value="@usuario.id">@usuario.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                }
+
+                <div class="db-field">
+                    <label asp-for="filtro.Texto3">Tipo</label>
+                    <select asp-for="filtro.Texto3" class="form-control">
+                        <option value="N">Todos los tipos</option>
+                        <option value="F">Facturación</option>
+                        <option value="S">SAP</option>
+                        <option value="D">Desarrollo</option>
+                    </select>
+                </div>
+
+                <div class="db-field">
+                    <button type="submit" class="db-search">
+                        <i class="fa fa-search"></i>
+                        Actualizar dashboard
+                    </button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="db-kpi-grid" aria-label="Indicadores principales">
+        <article class="db-kpi" style="--kpi-color:#0073bb">
+            <div class="db-kpi-top">
+                <div>
+                    <div class="db-kpi-label">Total de tiquetes</div>
+                    <div class="db-kpi-value">@dashboard.Total.ToString("N0")</div>
+                </div>
+                <span class="db-kpi-icon"><i class="fa fa-ticket"></i></span>
+            </div>
+            <div class="db-kpi-note">Solicitudes dentro del periodo</div>
+        </article>
+
+        <article class="db-kpi" style="--kpi-color:#1f7a45">
+            <div class="db-kpi-top">
+                <div>
+                    <div class="db-kpi-label">Abiertos</div>
+                    <div class="db-kpi-value">@dashboard.Abiertos.ToString("N0")</div>
+                </div>
+                <span class="db-kpi-icon"><i class="fa fa-folder-open"></i></span>
+            </div>
+            <div class="db-kpi-note">Tiquetes actualmente en atención</div>
+        </article>
+
+        <article class="db-kpi" style="--kpi-color:#9b5d00">
+            <div class="db-kpi-top">
+                <div>
+                    <div class="db-kpi-label">En validación</div>
+                    <div class="db-kpi-value">@dashboard.Validacion.ToString("N0")</div>
+                </div>
+                <span class="db-kpi-icon"><i class="fa fa-check-square-o"></i></span>
+            </div>
+            <div class="db-kpi-note">Pendientes de confirmación</div>
+        </article>
+
+        <article class="db-kpi" style="--kpi-color:#6b4ea0">
+            <div class="db-kpi-top">
+                <div>
+                    <div class="db-kpi-label">En espera</div>
+                    <div class="db-kpi-value">@dashboard.Espera.ToString("N0")</div>
+                </div>
+                <span class="db-kpi-icon"><i class="fa fa-clock-o"></i></span>
+            </div>
+            <div class="db-kpi-note">Aún no iniciados</div>
+        </article>
+
+        <article class="db-kpi" style="--kpi-color:#59636e">
+            <div class="db-kpi-top">
+                <div>
+                    <div class="db-kpi-label">Cerrados</div>
+                    <div class="db-kpi-value">@dashboard.Cerrados.ToString("N0")</div>
+                </div>
+                <span class="db-kpi-icon"><i class="fa fa-check-circle"></i></span>
+            </div>
+            <div class="db-kpi-note">@dashboard.TasaResolucion.ToString("N1")% de resolución</div>
+        </article>
+
+        <article class="db-kpi" style="--kpi-color:#0073bb">
+            <div class="db-kpi-top">
+                <div>
+                    <div class="db-kpi-label">Horas invertidas</div>
+                    <div class="db-kpi-value">@dashboard.HorasInvertidas.ToString("N1")</div>
+                </div>
+                <span class="db-kpi-icon"><i class="fa fa-hourglass-half"></i></span>
+            </div>
+            <div class="db-kpi-note">Promedio: @dashboard.PromedioHoras.ToString("N1") h por tiquete</div>
+        </article>
+
+        <article class="db-kpi" style="--kpi-color:#1f7a45">
+            <div class="db-kpi-top">
+                <div>
+                    <div class="db-kpi-label">Dentro del estimado</div>
+                    <div class="db-kpi-value">@dashboard.CumplimientoEstimado.ToString("N1")%</div>
+                </div>
+                <span class="db-kpi-icon"><i class="fa fa-bullseye"></i></span>
+            </div>
+            <div class="db-kpi-note">Comparación entre tiempo real y estimado</div>
+        </article>
+
+        <article class="db-kpi" style="--kpi-color:#b12704">
+            <div class="db-kpi-top">
+                <div>
+                    <div class="db-kpi-label">Sin asignar</div>
+                    <div class="db-kpi-value">@dashboard.SinAsignar.ToString("N0")</div>
+                </div>
+                <span class="db-kpi-icon"><i class="fa fa-user-times"></i></span>
+            </div>
+            <div class="db-kpi-note">Edad activa promedio: @dashboard.EdadPromedioActivos.ToString("N1") días</div>
+        </article>
+    </section>
+
+    <div class="db-grid-2">
+        <section class="db-card">
+            <header class="db-card-header">
+                <div>
+                    <h2 class="db-card-title">Evolución mensual</h2>
+                    <div class="db-card-description">Tiquetes creados y cerrados por mes</div>
+                </div>
+            </header>
+            <div class="db-card-body">
+                <div class="db-chart"><canvas id="chartTendencia"></canvas></div>
+            </div>
+        </section>
+
+        <section class="db-card">
+            <header class="db-card-header">
+                <div>
+                    <h2 class="db-card-title">Distribución por estado</h2>
+                    <div class="db-card-description">Situación actual del periodo</div>
+                </div>
+            </header>
+            <div class="db-card-body">
+                <div class="db-chart"><canvas id="chartEstados"></canvas></div>
+            </div>
+        </section>
+    </div>
+
+    <div class="db-grid-equal">
+        <section class="db-card">
+            <header class="db-card-header">
+                <div>
+                    <h2 class="db-card-title">Carga por consultor</h2>
+                    <div class="db-card-description">Top 10 por cantidad de tiquetes</div>
+                </div>
+            </header>
+            <div class="db-card-body">
+                <div class="db-chart"><canvas id="chartConsultores"></canvas></div>
+            </div>
+        </section>
+
+        <section class="db-card">
+            <header class="db-card-header">
+                <div>
+                    <h2 class="db-card-title">Empresas con más solicitudes</h2>
+                    <div class="db-card-description">Top 10 del periodo</div>
+                </div>
+            </header>
+            <div class="db-card-body">
+                <div class="db-chart"><canvas id="chartEmpresas"></canvas></div>
+            </div>
+        </section>
+    </div>
+
+    <div class="db-grid-equal">
+        <section class="db-card">
+            <header class="db-card-header">
+                <div>
+                    <h2 class="db-card-title">Tiquetes por tipo</h2>
+                    <div class="db-card-description">Facturación, SAP y Desarrollo</div>
+                </div>
+            </header>
+            <div class="db-card-body">
+                <div class="db-chart db-chart-small"><canvas id="chartTipos"></canvas></div>
+            </div>
+        </section>
+
+        <section class="db-card">
+            <header class="db-card-header">
+                <div>
+                    <h2 class="db-card-title">Antigüedad de casos activos</h2>
+                    <div class="db-card-description">Días transcurridos desde su creación</div>
+                </div>
+            </header>
+            <div class="db-card-body">
+                <div class="db-chart db-chart-small"><canvas id="chartAntiguedad"></canvas></div>
+            </div>
+        </section>
+    </div>
+
+    <div class="db-grid-equal">
+        <section class="db-card">
+            <header class="db-card-header">
+                <div>
+                    <h2 class="db-card-title">Rendimiento por consultor</h2>
+                    <div class="db-card-description">Carga activa, cierres y horas registradas</div>
+                </div>
+            </header>
+            <div class="db-table-wrap">
+                <table class="db-table">
+                    <thead>
+                        <tr>
+                            <th>Consultor</th>
+                            <th>Total</th>
+                            <th>Activos</th>
+                            <th>Cerrados</th>
+                            <th>Horas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!dashboard.Consultores.Any())
+                        {
+                            <tr><td colspan="5" class="db-empty">No hay información disponible.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in dashboard.Consultores)
+                            {
+                                <tr>
+                                    <td>@item.Nombre</td>
+                                    <td class="db-number">@item.Total</td>
+                                    <td class="db-number">@item.Activos</td>
+                                    <td class="db-number">@item.Cerrados</td>
+                                    <td class="db-number">@item.Horas.ToString("N1")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="db-card">
+            <header class="db-card-header">
+                <div>
+                    <h2 class="db-card-title">Tiquetes recientes</h2>
+                    <div class="db-card-description">Las últimas 12 solicitudes del periodo</div>
+                </div>
+            </header>
+            <div class="db-table-wrap">
+                <table class="db-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Asunto</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!dashboard.Recientes.Any())
+                        {
+                            <tr><td colspan="4" class="db-empty">No hay tiquetes recientes.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in dashboard.Recientes)
+                            {
+                                var claseEstado = "db-status-" + (item.EstadoCodigo ?? "").ToLowerInvariant();
+
+                                <tr title="@item.Empresa · @item.Usuario · @item.Tipo">
+                                    <td>
+                                        <a asp-page="/Tiquetes/Editar"
+                                           asp-route-id="@item.Id"
+                                           class="db-ticket-link">#@item.Id</a>
+                                    </td>
+                                    <td>@(item.Fecha.HasValue ? item.Fecha.Value.ToString("dd/MM/yyyy") : "—")</td>
+                                    <td>@item.Asunto</td>
+                                    <td><span class="db-status @claseEstado">@item.Estado</span></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof Chart === 'undefined') {
+                return;
+            }
+
+            var tendencia = @Html.Raw(tendenciaJson);
+            var estados = @Html.Raw(estadosJson);
+            var tipos = @Html.Raw(tiposJson);
+            var antiguedad = @Html.Raw(antiguedadJson);
+            var consultores = @Html.Raw(consultoresJson);
+            var empresas = @Html.Raw(empresasJson);
+
+            Chart.defaults.global.defaultFontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+            Chart.defaults.global.defaultFontColor = '#5f6b7a';
+
+            function opcionesBase() {
+                return {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 8
+                        }
+                    },
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                };
+            }
+
+            new Chart(document.getElementById('chartTendencia'), {
+                type: 'line',
+                data: {
+                    labels: tendencia.map(function (x) { return x.Etiqueta; }),
+                    datasets: [
+                        {
+                            label: 'Creados',
+                            data: tendencia.map(function (x) { return x.Creados; }),
+                            borderColor: '#0073bb',
+                            backgroundColor: 'rgba(0,115,187,.10)',
+                            pointBackgroundColor: '#0073bb',
+                            borderWidth: 2,
+                            lineTension: .25,
+                            fill: true
+                        },
+                        {
+                            label: 'Cerrados',
+                            data: tendencia.map(function (x) { return x.Cerrados; }),
+                            borderColor: '#1f7a45',
+                            backgroundColor: 'rgba(31,122,69,.06)',
+                            pointBackgroundColor: '#1f7a45',
+                            borderWidth: 2,
+                            lineTension: .25,
+                            fill: true
+                        }
+                    ]
+                },
+                options: Object.assign(opcionesBase(), {
+                    scales: {
+                        yAxes: [{ ticks: { beginAtZero: true, precision: 0 } }],
+                        xAxes: [{ gridLines: { display: false } }]
+                    }
+                })
             });
 
+            new Chart(document.getElementById('chartEstados'), {
+                type: 'doughnut',
+                data: {
+                    labels: estados.map(function (x) { return x.Etiqueta; }),
+                    datasets: [{
+                        data: estados.map(function (x) { return x.Valor; }),
+                        backgroundColor: ['#1f7a45', '#ff9900', '#0073bb', '#879596'],
+                        borderColor: '#ffffff',
+                        borderWidth: 3
+                    }]
+                },
+                options: Object.assign(opcionesBase(), {
+                    cutoutPercentage: 67,
+                    legend: { position: 'bottom' }
+                })
+            });
 
-            var ctx = document.getElementById("myAreaChart");
-            var myLineChart = new Chart(ctx, {
+            new Chart(document.getElementById('chartConsultores'), {
+                type: 'horizontalBar',
+                data: {
+                    labels: consultores.map(function (x) { return x.Nombre; }),
+                    datasets: [
+                        {
+                            label: 'Activos',
+                            data: consultores.map(function (x) { return x.Activos; }),
+                            backgroundColor: '#0073bb'
+                        },
+                        {
+                            label: 'Cerrados',
+                            data: consultores.map(function (x) { return x.Cerrados; }),
+                            backgroundColor: '#1f7a45'
+                        }
+                    ]
+                },
+                options: Object.assign(opcionesBase(), {
+                    scales: {
+                        xAxes: [{ ticks: { beginAtZero: true, precision: 0 }, stacked: true }],
+                        yAxes: [{ gridLines: { display: false }, stacked: true }]
+                    }
+                })
+            });
+
+            new Chart(document.getElementById('chartEmpresas'), {
+                type: 'horizontalBar',
+                data: {
+                    labels: empresas.map(function (x) { return x.Nombre; }),
+                    datasets: [{
+                        label: 'Tiquetes',
+                        data: empresas.map(function (x) { return x.Total; }),
+                        backgroundColor: '#6b4ea0'
+                    }]
+                },
+                options: Object.assign(opcionesBase(), {
+                    legend: { display: false },
+                    scales: {
+                        xAxes: [{ ticks: { beginAtZero: true, precision: 0 } }],
+                        yAxes: [{ gridLines: { display: false } }]
+                    }
+                })
+            });
+
+            new Chart(document.getElementById('chartTipos'), {
+                type: 'doughnut',
+                data: {
+                    labels: tipos.map(function (x) { return x.Etiqueta; }),
+                    datasets: [{
+                        data: tipos.map(function (x) { return x.Valor; }),
+                        backgroundColor: ['#0073bb', '#ff9900', '#6b4ea0', '#879596'],
+                        borderColor: '#ffffff',
+                        borderWidth: 3
+                    }]
+                },
+                options: Object.assign(opcionesBase(), {
+                    cutoutPercentage: 62,
+                    legend: { position: 'bottom' }
+                })
+            });
+
+            new Chart(document.getElementById('chartAntiguedad'), {
                 type: 'bar',
                 data: {
-                    labels: ["Abiertos", "Cerrados", "Espera"],
+                    labels: antiguedad.map(function (x) { return x.Etiqueta; }),
                     datasets: [{
-                        label: "Cantidad",
-                        backgroundColor: "rgba(2,117,216,1)",
-                        borderColor: "rgba(2,117,216,1)",
-                        data: [@Model.CantAbiertos,@Model.CantCerrados,@Model.CantEspera],
-                    }],
+                        label: 'Casos activos',
+                        data: antiguedad.map(function (x) { return x.Valor; }),
+                        backgroundColor: ['#1f7a45', '#0073bb', '#ff9900', '#e47911', '#b12704']
+                    }]
                 },
-                options: {
+                options: Object.assign(opcionesBase(), {
+                    legend: { display: false },
                     scales: {
-                        xAxes: [{
-                             
-                            gridLines: {
-                                display: false
-                            },
-                            ticks: {
-                                maxTicksLimit: 6
-                            }
-                        }],
-                        yAxes: [{
-                             
-                            gridLines: {
-                                display: true
-                            }
-                        }],
-                    },
-                    legend: {
-                        display: false
+                        yAxes: [{ ticks: { beginAtZero: true, precision: 0 } }],
+                        xAxes: [{ gridLines: { display: false } }]
                     }
-                }
+                })
             });
-        
-
-
-
         });
-
-
     </script>
-
 }
-@using Microsoft.AspNetCore.Http
-@using System;
-@using System.Collections.Generic;
-@using System.IO;
-@using System.Linq;
-@using System.Security.Claims;
-@using System.Threading.Tasks;
-@using Microsoft.AspNetCore.Mvc;
-@using Microsoft.AspNetCore.Mvc.RazorPages;
-@using Microsoft.Extensions.Configuration;
-@using Refit;
-@using Sicsoft.Checkin.Web.Models;
-@using Newtonsoft.Json;
-@inject IHttpContextAccessor httpContextAccessor
-
-
-
-
-<div class="container-fluid px-4">
-    <h1 class="mt-4">Inicio</h1>
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item active">Reporterìa</li>
-    </ol>
-
-    <form method="get">
-        <div class="row">
-
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-sm-6">
-                        <label class="col-form-label">Fecha Inicial:</label>
-                        <input class="form-control" id="FecInicial" type="date" asp-for="filtro.FechaInicial" />
-                    </div>
-                    <div class="col-sm-6">
-                        <label class="col-form-label">Fecha Final:</label>
-                        <input class="form-control" id="FecFinal" type="date" asp-for="filtro.FechaFinal" />
-                    </div>
-
-                </div>
-
-
-            </div>
-            @if (!string.IsNullOrEmpty(Roles.Where(a => a == "4").FirstOrDefault()))
-            {
-                <div class="col-md-3">
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <label class="col-form-label">Usuario:</label>
-                            <select asp-for="filtro.Codigo1" id="idUsuario" class="form-control  ">
-                                <option value="0" selected>-Seleccione usuario-</option>
-                                @foreach (var item in Model.Usuarios)
-                                {
-                                    <option value="@item.id">@item.id - @item.Nombre</option>
-                                }
-                            </select>
-                        </div>
-
-
-                    </div>
-
-
-                </div>
-            }
-            <div class="col-md-3">
-
-
-                <button title="Buscar" type="submit" style="margin-top: 13%;" class="btn btn btn-primary"> <i class="fa fa-search"></i></button>
-
-
-
-
-
-            </div>
-
-        </div>
-    </form>
-    <br />
-
-    <div class="row">
-        <div class="col-xl-4 col-md-6">
-            <div class="card bg-primary text-white mb-4">
-                <div class="card-body">
-                    <label>Cantidad Abiertos</label>
-                    <h1>@Model.CantAbiertos</h1>
-                </div>
-
-            </div>
-        </div>
-        <div class="col-xl-4 col-md-6">
-            <div class="card bg-success text-white mb-4">
-                <div class="card-body">
-                    <label>Cantidad Cerrados</label>
-                    <h1>@Model.CantCerrados</h1>
-                </div>
-
-            </div>
-        </div>
-        <div class="col-xl-4 col-md-6">
-            <div class="card bg-warning text-white mb-4">
-                <div class="card-body">
-                    <label>Cantidad Espera</label>
-                    <h1>@Model.CantEspera</h1>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-
-
-    <div class="row">
-        <div class="col-xl-12" style="text-align: center;">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-chart-area me-1"></i>
-                    Cantidad Casos
-                </div>
-                <div class="card-body"><canvas id="myAreaChart" width="100%" height="40"></canvas></div>
-            </div>
-        </div>
-
-    </div>
-
-</div>

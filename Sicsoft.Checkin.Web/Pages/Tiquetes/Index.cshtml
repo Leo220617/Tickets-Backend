@@ -1,344 +1,746 @@
 ﻿@page
 @model Tickets.Pages.Tiquetes.IndexModel
+@using System
+@using System.Linq
+@using System.Security.Claims
+
 @{
     ViewData["Title"] = "Tiquetes";
+
+    var rolesClaim = ((ClaimsIdentity)User.Identity).Claims
+        .FirstOrDefault(x => x.Type == "Roles")?.Value ?? "";
+    var Roles = rolesClaim.Split('|', StringSplitOptions.RemoveEmptyEntries);
+
+    var puedeGestionarEstado = Roles.Contains("2");
+    var puedeFiltrarUsuario = Roles.Contains("4");
+
+    var usuarios = Model.Usuarios ?? Array.Empty<InversionGloblalWeb.Models.UsuariosViewModel>();
+    var empresas = Model.Empresas ?? Array.Empty<Tickets.Models.EmpresasViewModel>();
+    var tiquetes = Model.Objeto ?? Array.Empty<Tickets.Models.TiquetesViewModel>();
 }
 
-@using System.Globalization;
-@{
-    NumberFormatInfo formato = new CultureInfo("en-US").NumberFormat;
-    formato.CurrencyGroupSeparator = ",";
-    formato.NumberDecimalSeparator = ".";
-
-
-}
-
-
-@section styles{
-
+@section styles {
     <style>
-        .tableFixHead th {
-            position: sticky;
-            top: 0;
-            background: white;
+        :root {
+            --pg-navy: #131e29;
+            --pg-navy-soft: #1f3042;
+            --pg-orange: #ff9900;
+            --pg-orange-dark: #e47911;
+            --pg-blue: #0073bb;
+            --pg-blue-dark: #005a8c;
+            --pg-text: #161e2d;
+            --pg-muted: #5f6b7a;
+            --pg-border: #d5dbdb;
+            --pg-surface: #ffffff;
+            --pg-background: #f2f3f3;
+            --pg-success: #1f7a45;
+            --pg-warning: #9b5d00;
+            --pg-danger: #b12704;
+        }
+
+        body {
+            background: var(--pg-background);
+            color: var(--pg-text);
+        }
+
+        .pg-page {
+            padding: 24px;
+        }
+
+        .pg-hero {
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+            padding: 24px 28px;
+            border-radius: 10px;
+            background: linear-gradient(125deg, var(--pg-navy), var(--pg-navy-soft));
+            color: #fff;
+            box-shadow: 0 3px 10px rgba(19, 30, 41, .18);
+        }
+
+            .pg-hero::after {
+                content: "";
+                position: absolute;
+                right: -65px;
+                bottom: -85px;
+                width: 220px;
+                height: 220px;
+                border: 35px solid rgba(255, 153, 0, .15);
+                border-radius: 50%;
+            }
+
+        .pg-eyebrow {
+            margin-bottom: 4px;
+            color: #aab7b8;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .11em;
+            text-transform: uppercase;
+        }
+
+        .pg-title {
+            margin: 0;
+            font-size: 28px;
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+
+        .pg-subtitle {
+            margin: 7px 0 0;
+            color: #d5dbdb;
+            font-size: 14px;
+        }
+
+        .pg-card {
+            margin-bottom: 20px;
+            border: 1px solid var(--pg-border);
+            border-radius: 9px;
+            background: var(--pg-surface);
+            box-shadow: 0 1px 3px rgba(19, 30, 41, .08);
+        }
+
+        .pg-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 58px;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--pg-border);
+        }
+
+        .pg-card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .pg-section-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: #eef7fc;
+            color: var(--pg-blue);
+        }
+
+        .pg-filter-body {
+            padding: 18px 20px 20px;
+        }
+
+        .pg-filter-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(140px, 1fr));
+            gap: 16px;
+            align-items: end;
+        }
+
+        .pg-field label {
+            display: block;
+            margin-bottom: 6px;
+            color: #34465a;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .pg-field .form-control {
+            width: 100%;
+            min-height: 42px;
+            border: 1px solid #aab7b8;
+            border-radius: 5px;
+            background-color: #fff;
+            color: var(--pg-text);
+            font-size: 14px;
+            box-shadow: inset 0 1px 2px rgba(19, 30, 41, .04);
+        }
+
+            .pg-field .form-control:focus {
+                border-color: var(--pg-blue);
+                box-shadow: 0 0 0 3px rgba(0, 115, 187, .15);
+            }
+
+        .pg-search-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            min-height: 42px;
+            border: 1px solid var(--pg-orange-dark);
+            border-radius: 5px;
+            background: linear-gradient(#ffad33, var(--pg-orange));
+            color: #111820;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+            .pg-search-button:hover {
+                background: linear-gradient(#ffa41c, #f08804);
+            }
+
+        .pg-excel-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            min-height: 42px;
+            border: 1px solid #176b3a;
+            border-radius: 5px;
+            background: linear-gradient(#2f995c, #1f7a45);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+            .pg-excel-button:hover {
+                border-color: #12572f;
+                background: linear-gradient(#27864f, #176b3a);
+                color: #fff;
+            }
+
+        .pg-count {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #eef7fc;
+            color: var(--pg-blue-dark);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .pg-table-wrap {
+            overflow-x: auto;
+        }
+
+        .pg-table {
+            width: 100%;
+            margin: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 13px;
+        }
+
+            .pg-table thead th {
+                position: sticky;
+                top: 0;
+                z-index: 2;
+                padding: 12px 14px;
+                border-bottom: 2px solid #879596;
+                background: #f7f8f8;
+                color: #34465a;
+                font-size: 11px;
+                font-weight: 800;
+                letter-spacing: .045em;
+                text-align: left;
+                text-transform: uppercase;
+                white-space: nowrap;
+            }
+
+            .pg-table tbody td {
+                padding: 13px 14px;
+                border-bottom: 1px solid #eaeded;
+                vertical-align: middle;
+            }
+
+            .pg-table tbody tr:hover {
+                background: #f8fbfd;
+            }
+
+        .pg-ticket-id {
+            color: var(--pg-blue-dark);
+            font-weight: 800;
+        }
+
+        .pg-subject {
+            min-width: 210px;
+            max-width: 360px;
+            font-weight: 600;
+        }
+
+        .pg-muted {
+            color: var(--pg-muted);
+        }
+
+        .pg-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 9px;
+            border: 1px solid transparent;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+            .pg-status::before {
+                content: "";
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: currentColor;
+            }
+
+        .pg-status-open {
+            border-color: #acd6bf;
+            background: #edf8f1;
+            color: var(--pg-success);
+        }
+
+        .pg-status-validation {
+            border-color: #f1cd8f;
+            background: #fff8e8;
+            color: var(--pg-warning);
+        }
+
+        .pg-status-waiting {
+            border-color: #b8d8eb;
+            background: #eef7fc;
+            color: var(--pg-blue-dark);
+        }
+
+        .pg-status-closed {
+            border-color: #d5dbdb;
+            background: #f2f3f3;
+            color: #59636e;
+        }
+
+        .pg-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .pg-icon-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            border: 1px solid var(--pg-border);
+            border-radius: 5px;
+            background: #fff;
+            color: #34465a;
+            font-size: 15px;
+            text-decoration: none !important;
+            cursor: pointer;
+        }
+
+            .pg-icon-button:hover {
+                border-color: #879596;
+                background: #f7f8f8;
+                color: var(--pg-blue-dark);
+            }
+
+        .pg-icon-danger {
+            color: var(--pg-danger);
+        }
+
+        .pg-icon-success {
+            color: var(--pg-success);
+        }
+
+        .pg-icon-merge {
+            color: #7b3fb4;
+        }
+
+            .pg-icon-merge:hover {
+                border-color: #7b3fb4;
+                background: #f6effc;
+                color: #602b91;
+            }
+        .pg-empty {
+            padding: 54px 20px !important;
+            color: var(--pg-muted);
+            text-align: center;
+        }
+
+            .pg-empty i {
+                display: block;
+                margin-bottom: 12px;
+                color: #aab7b8;
+                font-size: 34px;
+            }
+
+        @@media (max-width: 1200px) {
+            .pg-filter-grid {
+                grid-template-columns: repeat(3, minmax(180px, 1fr));
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .pg-page {
+                padding: 14px;
+            }
+
+            .pg-hero {
+                padding: 20px;
+            }
+
+            .pg-filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pg-status-reopened {
+            border-color: #f2aaa0;
+            background: #fff0ee;
+            color: #b12704;
+        }
+
+        .pg-reopen-date {
+            display: block;
+            margin-top: 5px;
+            color: #b12704;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
         }
     </style>
-
 }
 
-    @section scripts{
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+<div class="pg-page">
+    <header class="pg-hero">
+        <div class="pg-eyebrow">Centro de soporte</div>
+        <h1 class="pg-title">Administración de tiquetes</h1>
+        <p class="pg-subtitle">Consulta, asigna y administra las solicitudes de soporte.</p>
+    </header>
 
-    <script>
-        $(document).ready(function() {
-            jQuery(document).ready(function($) {
-
-            });
-
-
-
-
-
-
-        });
-
-        var ids = 0;
-        var ids2 = 0;
-        function onClickModal(id) {
-
-            ids = id;
-
-
-            Swal.fire({
-                title: '¿Desea abrir/cerrar este ticket?',
-                showDenyButton: true,
-                showCancelButton: false,
-                confirmButtonText: `Aceptar`,
-                denyButtonText: `Cancelar`,
-                customClass: {
-                    confirmButton: 'swalBtnColor',
-                    denyButton: 'swalDeny'
-                },
-            }).then((result) => {
-                /* Read more about isConfirmed, isDenied below */
-                if (result.isConfirmed) {
-
-                    Eliminar();
-
-                }
-            })
-
-
-        }
-        function Eliminar() {
-
-
-            $.ajax({
-                type: 'GET',
-                dataType: 'json',
-                url: '@Url.Page("Index", "Eliminar")',
-                data: { id: ids },
-                success: function(result) {
-
-                    if (result == false) {
-                        ids = 0;
-                        // $("#Eliminar").hide();
-                        // $("#Error").show();
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Oops...',
-                            text: 'Ha ocurrido un error al intentar abrir/cerrar el ticket'
-
-                        })
-                    } else {
-                        Swal.fire({
-                            title: "Ha sido abierto/cerrado con éxito",
-
-                            icon: 'success',
-                            showCancelButton: false,
-                            customClass: {
-                                confirmButton: 'swalBtnColor',
-
-                            },
-                            confirmButtonText: 'OK'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                location.reload();
-                            }
-                        })
-                    }
-                },
-                beforeSend: function() {
-
-                },
-                complete: function() {
-
-                }
-            })
-        }
-    </script>
-}
-
-    @using Microsoft.AspNetCore.Http
-    @using System;
-    @using System.Collections.Generic;
-    @using System.IO;
-    @using System.Linq;
-    @using System.Security.Claims;
-    @using System.Threading.Tasks;
-    @using Microsoft.AspNetCore.Mvc;
-    @using Microsoft.AspNetCore.Mvc.RazorPages;
-    @using Microsoft.Extensions.Configuration;
-    @using Refit;
-    @using Sicsoft.Checkin.Web.Models;
-    @inject IHttpContextAccessor httpContextAccessor
-
-    @{
-    var Roles = ((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == "Roles").Select(s1 => s1.Value).FirstOrDefault().Split("|");
-}
-
-
-
-<div class="container-fluid px-4">
-    <h1 class="mt-4">Tickets</h1>
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item">Tickets</li>
-        <li class="breadcrumb-item active">Listado</li>
-    </ol>
-    <div class="row" style="margin-block-end: 3%;">
-        <div class="col-sm-6"></div>
-        <div hidden class="col-sm-6" style="text-align: right;">
-            <a asp-page="Nuevo" class="btn btn-primary" title="Agregar"><i class="fa fa-plus"></i> Agregar</a>
+    <section class="pg-card" aria-labelledby="tituloFiltros">
+        <div class="pg-card-header">
+            <h2 class="pg-card-title" id="tituloFiltros">
+                <span class="pg-section-icon"><i class="fa fa-filter"></i></span>
+                Filtros
+            </h2>
         </div>
-    </div>
 
-    <form method="get">
-        <div class="row">
-
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-sm-6">
-                        <label class="col-form-label">Fecha Inicial:</label>
+        <div class="pg-filter-body">
+            <form method="get">
+                <div class="pg-filter-grid">
+                    <div class="pg-field">
+                        <label asp-for="filtro.FechaInicial">Fecha inicial</label>
                         <input class="form-control" id="FecInicial" type="date" asp-for="filtro.FechaInicial" />
                     </div>
-                    <div class="col-sm-6">
-                        <label class="col-form-label">Fecha Final:</label>
+
+                    <div class="pg-field">
+                        <label asp-for="filtro.FechaFinal">Fecha final</label>
                         <input class="form-control" id="FecFinal" type="date" asp-for="filtro.FechaFinal" />
                     </div>
 
-                </div>
-
-
-            </div>
-            @if (!string.IsNullOrEmpty(Roles.Where(a => a == "4").FirstOrDefault()))
-            {
-                <div class="col-md-3">
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <label class="col-form-label">Usuario:</label>
-                            <select asp-for="filtro.Codigo1" id="idUsuario" class="form-control  ">
-                                <option value="0" selected>-Seleccione usuario-</option>
-                                @foreach (var item in Model.Usuarios)
+                    @if (puedeFiltrarUsuario)
+                    {
+                        <div class="pg-field">
+                            <label asp-for="filtro.Codigo1">Usuario</label>
+                            <select asp-for="filtro.Codigo1" id="idUsuario" class="form-control">
+                                <option value="0">Todos los usuarios</option>
+                                @foreach (var usuario in usuarios)
                                 {
-                                    <option value="@item.id">@item.id - @item.Nombre</option>
+                                    <option value="@usuario.id">@usuario.id - @usuario.Nombre</option>
                                 }
                             </select>
                         </div>
+                    }
 
-
-                    </div>
-
-
-                </div>
-            }
-            <div class="col-md-3">
-                <div class="row">
-                    <div class="col-sm-12">
-                        <label class="col-form-label">Estado:</label>
-                        <select asp-for="filtro.Texto2" id="idEstado" class="form-control  ">
-                            <option value="N" selected>-Seleccione Estado-</option>
-
+                    <div class="pg-field">
+                        <label asp-for="filtro.Texto2">Estado</label>
+                        <select asp-for="filtro.Texto2" id="idEstado" class="form-control">
+                            <option value="N">Todos</option>
+                            <option value="AV">Abiertos y en validación</option>
                             <option value="E">Espera</option>
                             <option value="A">Abierto</option>
                             <option value="V">Validación</option>
                             <option value="C">Cerrado</option>
-
-
                         </select>
                     </div>
 
-
-                </div>
-
-
-            </div>
-            <div class="col-md-3">
-                <div class="row">
-                    <div class="col-sm-12">
-                        <label class="col-form-label">Empresa:</label>
-                        <select asp-for="filtro.Codigo2" id="idEmpresa" class="form-control  ">
-                            <option value="0" selected>-Seleccione Empresa-</option>
-
-                            @foreach (var item in Model.Empresas)
+                    <div class="pg-field">
+                        <label asp-for="filtro.Codigo2">Empresa</label>
+                        <select asp-for="filtro.Codigo2" id="idEmpresa" class="form-control">
+                            <option value="0">Todas las empresas</option>
+                            @foreach (var empresa in empresas)
                             {
-                                <option value="@item.id">@item.id - @item.Nombre</option>
+                                <option value="@empresa.id">@empresa.id - @empresa.Nombre</option>
                             }
-
-
                         </select>
                     </div>
+                    <div class="pg-field">
+                        <label asp-for="filtro.Texto3">Tipo</label>
+                        <select asp-for="filtro.Texto3"
+                                id="idTipo"
+                                class="form-control">
+                            <option value="N">Todos los tipos</option>
+                            <option value="F">Facturación</option>
+                            <option value="S">SAP</option>
+                            <option value="D">Desarrollo</option>
+                        </select>
+                    </div>
+                    <div class="pg-field">
+                        <button title="Aplicar filtros" type="submit" class="pg-search-button">
+                            <i class="fa fa-search"></i>
+                            Buscar tiquetes
+                        </button>
+                    </div>
 
-
+                    <div class="pg-field">
+                        <button title="Descargar reporte de facturación"
+                                type="submit"
+                                name="handler"
+                                value="ExportarFacturacion"
+                                class="pg-excel-button">
+                            <i class="fa fa-file-excel-o"></i>
+                            Descargar Excel
+                        </button>
+                    </div>
                 </div>
-
-
-            </div>
-            <div class="col-md-3"></div>
-            <div class="col-md-3"></div>
-
-            <div class="col-md-3" style="text-align: right;">
-
-
-                <button title="Buscar" type="submit" style="margin-top: 13%;" class="btn btn btn-primary"> <i class="fa fa-search"></i></button>
-
-
-
-
-
-            </div>
-
+            </form>
         </div>
-    </form>
+    </section>
 
-    <br />
-    <div class="card mb-4">
-        <div class="card-header">
-            <i class="fa fa-table me-1"></i>
-            Tickets
+    <section class="pg-card" aria-labelledby="tituloTiquetes">
+        <div class="pg-card-header">
+            <h2 class="pg-card-title" id="tituloTiquetes">
+                <span class="pg-section-icon"><i class="fa fa-ticket"></i></span>
+                Tiquetes
+            </h2>
+            <span class="pg-count">@tiquetes.Length registros</span>
         </div>
-        <div class="card-body">
-            <table id="datatablesSimple">
+
+        <div class="pg-table-wrap">
+            <table id="datatablesSimple" class="pg-table">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Fecha</th>
                         <th>Asunto</th>
-                        <th>Usuario Asignado</th>
-                        <th>Duración</th>
-                        <th>Duración Estimada</th>
+                        <th>Usuario asignado</th>
+                        <th>Tiempo</th>
+                        <th>Estimado</th>
                         <th>Empresa</th>
                         <th>Estado</th>
-                        <th>Acción</th>
+                        <th>Acciones</th>
                     </tr>
-
                 </thead>
-                <tfoot>
-                    <tr>
-                        <th>ID</th>
-                        <th>Fecha</th>
-                        <th>Asunto</th>
-                        <th>Usuario Asignado</th>
-                        <th>Duración</th>
-                        <th>Duración Estimada</th>
-                        <th>Empresa</th>
-                        <th>Estado</th>
-                        <th>Acción</th>
-                    </tr>
-                </tfoot>
                 <tbody>
-                    @foreach (var item in Model.Objeto)
+                    @if (!tiquetes.Any())
                     {
                         <tr>
-                            <td>@item.id</td>
-                            <td>@item.FechaTicket.Value.ToString("dd/MM/yyyy")</td>
-                            <td>@item.Asunto</td>
-                            <td>@(Model.Usuarios.Where(a => a.id == item.idLoginAsignado).FirstOrDefault() == null ? "No Asignado" : Model.Usuarios.Where(a => a.id == item.idLoginAsignado).FirstOrDefault().Nombre )</td>
-                            <td>@item.Duracion</td>
-                            <td>@item.DuracionEstimada</td>
-                            <td>@(Model.Empresas.Where(a => a.id == item.idEmpresa).FirstOrDefault() == null ? "No Asignado" : Model.Empresas.Where(a => a.id == item.idEmpresa).FirstOrDefault().Nombre )</td>
-                            @switch (item.Status)
-                            {
-                                case "E":
-                                    {
-                                        <td>Espera</td>
-                                        break;
-                                    }
-                                case "A":
-                                    {
-                                        <td>Abierto</td>
-                                        break;
-                                    }
-                                case "C":
-                                    {
-                                        <td>Cerrado</td>
-                                        break;
-                                    }
-                                default:
-                                    {
-                                        <td>Espera</td>
-                                        break;
-                                    }
-                            }
-                            <td>
-                              
-                                    <a asp-page="./Editar" asp-route-id="@item.id" title="Editar" class="fa fa-edit icono">  </a>
-
-                               
-                                &nbsp;
-                                @if (!string.IsNullOrEmpty(Roles.Where(a => a == "2").FirstOrDefault()))
-                                {
-                                    <a onclick="javascript: onClickModal('@item.id')" title="Abrir/Cerrar" class="fa fa-eraser icono">   </a>
-                                }
-                              @*   &nbsp;
-                                <a asp-page="./Observar" asp-route-id="@item.id" title="Observar" class="fa fa-eye icono" style="color: yellow;">  </a> *@
+                            <td colspan="9" class="pg-empty">
+                                <i class="fa fa-inbox"></i>
+                                No se encontraron tiquetes para los filtros seleccionados.
                             </td>
-
                         </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in tiquetes)
+                        {
+                            var usuario = usuarios.FirstOrDefault(x => x.id == item.idLoginAsignado);
+                            var empresa = empresas.FirstOrDefault(x => x.id == item.idEmpresa);
+
+                            var estadoTexto = "Espera";
+                            var estadoClase = "pg-status-waiting";
+
+                            switch (item.Status)
+                            {
+                                case "A":
+                                    estadoTexto = "Abierto";
+                                    estadoClase = "pg-status-open";
+                                    break;
+                                case "V":
+                                    estadoTexto = "Validación";
+                                    estadoClase = "pg-status-validation";
+                                    break;
+                                case "C":
+                                    estadoTexto = "Cerrado";
+                                    estadoClase = "pg-status-closed";
+                                    break;
+                            }
+
+                            <tr>
+                                <td><span class="pg-ticket-id">#@item.id</span></td>
+                                <td class="pg-muted">@(item.FechaTicket.HasValue ? item.FechaTicket.Value.ToString("dd/MM/yyyy") : "—")</td>
+                              
+                          
+                           
+                                <td class="pg-subject">@item.Asunto</td>
+                                <td>@(usuario?.Nombre ?? "Sin asignar")</td>
+                                <td class="pg-muted">@(string.IsNullOrWhiteSpace(item.Duracion) ? "00:00" : item.Duracion)</td>
+                                <td class="pg-muted">@(string.IsNullOrWhiteSpace(item.DuracionEstimada) ? "00:00" : item.DuracionEstimada)</td>
+                                <td>@(empresa?.Nombre ?? "Sin empresa")</td>
+                                <td>
+                                    @if (item.Status == "A" && item.FechaReapertura.HasValue)
+                                    {
+                                        <span class="pg-status pg-status-reopened">
+                                            Reabierto
+                                        </span>
+
+                                        <span class="pg-reopen-date" title="@item.FechaReapertura.Value.ToString("dd/MM/yyyy HH:mm:ss")">
+                                            <i class="fa fa-history mr-1"></i>
+                                            @item.FechaReapertura.Value.ToString("dd/MM/yyyy HH:mm")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="pg-status @estadoClase">
+                                            @estadoTexto
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="pg-actions">
+                                        <a asp-page="./Editar"
+                                           asp-route-id="@item.id"
+                                           title="Editar tiquete"
+                                           aria-label="Editar tiquete"
+                                           class="pg-icon-button">
+                                            <i class="fa fa-pencil"></i>
+                                        </a>
+
+                                        @if (puedeGestionarEstado)
+                                        {
+                                            if (item.Status == "C")
+                                            {
+                                                <button type="button"
+                                                        onclick="onClickModal(@item.id)"
+                                                        title="Abrir tiquete"
+                                                        aria-label="Abrir tiquete"
+                                                        class="pg-icon-button pg-icon-success">
+                                                    <i class="fa fa-folder-open"></i>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button"
+                                                        onclick="onClickModalR(@item.id)"
+                                                        title="Cerrar tiquete"
+                                                        aria-label="Cerrar tiquete"
+                                                        class="pg-icon-button pg-icon-danger">
+                                                    <i class="fa fa-trash-o"></i>
+                                                </button>
+                                            }
+
+                                            if (item.Status == "V")
+                                            {
+                                                <button type="button"
+                                                        onclick="pasarAAbierto(@item.id)"
+                                                        title="Pasar a abierto"
+                                                        aria-label="Pasar a abierto"
+                                                        class="pg-icon-button pg-icon-success">
+                                                    <i class="fa fa-level-up"></i>
+                                                </button>
+                                            }
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 </div>
+
+@section scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        let ticketSeleccionado = 0;
+
+        function cambiarEstado(id, accion) {
+            ticketSeleccionado = id;
+
+            const esAbrir = accion === 'abrir';
+
+            Swal.fire({
+                icon: 'question',
+                title: esAbrir ? 'Abrir tiquete' : 'Cerrar tiquete',
+                text: esAbrir
+                    ? '¿Desea abrir este tiquete?'
+                    : '¿Desea cerrar este tiquete y notificar al cliente?',
+                showCancelButton: true,
+                confirmButtonText: esAbrir ? 'Abrir' : 'Cerrar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: esAbrir ? '#1f7a45' : '#b12704'
+            }).then(function (resultado) {
+                if (!resultado.isConfirmed) return;
+
+                $.ajax({
+                    type: 'GET',
+                    dataType: 'json',
+                    url: '@Url.Page("Index", "Eliminar")',
+                    data: { id: ticketSeleccionado }
+                }).done(function (respuesta) {
+                    if (respuesta === false) {
+                        Swal.fire('No se completó la operación', 'No fue posible cambiar el estado del tiquete.', 'error');
+                        return;
+                    }
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: esAbrir ? 'Tiquete abierto' : 'Tiquete cerrado',
+                        text: esAbrir
+                            ? 'El tiquete fue abierto correctamente.'
+                            : 'El tiquete fue cerrado correctamente.',
+                        confirmButtonColor: '#0073bb'
+                    }).then(function () {
+                        window.location.reload();
+                    });
+                }).fail(function () {
+                    Swal.fire('Error', 'No fue posible cambiar el estado del tiquete.', 'error');
+                });
+            });
+        }
+
+        function onClickModal(id) {
+            cambiarEstado(id, 'abrir');
+        }
+
+        function onClickModalR(id) {
+            cambiarEstado(id, 'cerrar');
+        }
+
+        function pasarAAbierto(id) {
+            Swal.fire({
+                icon: 'question',
+                title: 'Pasar a abierto',
+                text: '¿Desea pasar este tiquete a estado Abierto?',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, abrir',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#1f7a45'
+            }).then(function (resultado) {
+                if (!resultado.isConfirmed) return;
+
+                $.ajax({
+                    type: 'GET',
+                    dataType: 'json',
+                    url: '@Url.Page("Index", "Eliminar")',
+                    data: { id: id }
+                }).done(function (respuesta) {
+                    if (respuesta === false) {
+                        Swal.fire('Error', 'No se pudo abrir el tiquete.', 'error');
+                        return;
+                    }
+
+                    Swal.fire('Tiquete abierto', 'El tiquete fue pasado a Abierto.', 'success')
+                        .then(function () { window.location.reload(); });
+                }).fail(function () {
+                    Swal.fire('Error', 'No se pudo abrir el tiquete.', 'error');
+                });
+            });
+        }
+    </script>
+}
+
+

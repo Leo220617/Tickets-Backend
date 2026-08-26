@@ -15,80 +15,140 @@ using Tickets.Models;
 
 namespace Sicsoft.Checkin.Web.Pages
 {
-    [Microsoft.AspNetCore.Authorization.Authorize]
+
     public class IndexModel : PageModel
     {
-        private readonly ILogger<IndexModel> _logger;
-        private readonly ICrudApi<TiquetesViewModel, int> service;
+        private readonly ILogger<IndexModel> logger;
+        private readonly ICrudApi<DashboardTicketsViewModel, int> dashboardService;
         private readonly ICrudApi<UsuariosViewModel, int> users;
 
         [BindProperty(SupportsGet = true)]
         public ParametrosFiltros filtro { get; set; }
-        [BindProperty]
+
         public UsuariosViewModel[] Usuarios { get; set; }
+        public DashboardTicketsViewModel Dashboard { get; set; }
+        public bool PuedeFiltrarUsuario { get; set; }
 
-        [BindProperty]
-        public TiquetesViewModel[] Objeto { get; set; }
-
-        [BindProperty]
-        public int CantAbiertos { get; set; }
-        [BindProperty]
-        public int CantCerrados { get; set; }
-        [BindProperty]
-        public int CantEspera { get; set; }
-
-
-        public IndexModel(ILogger<IndexModel> logger, ICrudApi<TiquetesViewModel, int> service, ICrudApi<UsuariosViewModel, int> users)
+        public IndexModel(
+            ILogger<IndexModel> logger,
+            ICrudApi<DashboardTicketsViewModel, int> dashboardService,
+            ICrudApi<UsuariosViewModel, int> users)
         {
-            _logger = logger;
-            this.service = service;
+            this.logger = logger;
+            this.dashboardService = dashboardService;
             this.users = users;
+
+            filtro = new ParametrosFiltros();
+            Usuarios = new UsuariosViewModel[0];
+            Dashboard = new DashboardTicketsViewModel();
         }
 
         public async Task<IActionResult> OnGetAsync()
         {
             try
             {
-                var Roles1 = ((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == "Roles").Select(s1 => s1.Value).FirstOrDefault().Split("|");
-                if (string.IsNullOrEmpty(Roles1.Where(a => a == "4").FirstOrDefault()))
+                var identity = User.Identity as ClaimsIdentity;
+                var rolesClaim = identity?.Claims
+                    .FirstOrDefault(x => x.Type == "Roles")?.Value ?? "";
+
+                var roles = rolesClaim.Split(
+                    new[] { '|' },
+                    StringSplitOptions.RemoveEmptyEntries
+                );
+
+                PuedeFiltrarUsuario = roles.Contains("4");
+
+                if (filtro == null)
                 {
-                    filtro.Codigo1 = Convert.ToInt32(((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == ClaimTypes.NameIdentifier).Select(s1 => s1.Value).FirstOrDefault());
+                    filtro = new ParametrosFiltros();
                 }
 
-                DateTime time = new DateTime();
-                if (time == filtro.FechaInicial)
+                var hoy = DateTime.Today;
+
+                if (filtro.FechaInicial == DateTime.MinValue)
                 {
-                    filtro.FechaInicial = DateTime.Now;
-
-                    filtro.FechaInicial = new DateTime(filtro.FechaInicial.Year, filtro.FechaInicial.Month, 1);
-
-
-                    DateTime primerDia = new DateTime(filtro.FechaInicial.Year, filtro.FechaInicial.Month, 1);
-
-
-                    DateTime ultimoDia = primerDia.AddMonths(1).AddDays(-1);
-
-                    filtro.FechaFinal = ultimoDia;
-
+                    filtro.FechaInicial = new DateTime(hoy.Year, 1, 1);
                 }
 
-                Objeto = await service.ObtenerLista(filtro);
-                Usuarios = await users.ObtenerLista("");
-                CantAbiertos = Objeto.Where(a => a.Status == "A").Count();
-                CantCerrados = Objeto.Where(a => a.Status == "C").Count();
-                CantEspera = Objeto.Where(a => a.Status == "E").Count();
+                if (filtro.FechaFinal == DateTime.MinValue)
+                {
+                    filtro.FechaFinal = hoy;
+                }
+
+                if (string.IsNullOrWhiteSpace(filtro.Texto3))
+                {
+                    filtro.Texto3 = "N";
+                }
+
+                if (!PuedeFiltrarUsuario)
+                {
+                    var idClaim = identity?.Claims
+                        .FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)
+                        ?.Value;
+
+                    int idUsuario;
+                    if (!int.TryParse(idClaim, out idUsuario))
+                    {
+                        return RedirectToPage("/NoPermiso");
+                    }
+
+                    filtro.Codigo1 = idUsuario;
+                }
+
+                var tareaDashboard = dashboardService.ObtenerLista(filtro);
+                var tareaUsuarios = users.ObtenerLista("");
+
+                await Task.WhenAll(tareaDashboard, tareaUsuarios);
+
+                var resultado = await tareaDashboard;
+
+                Dashboard = resultado?.FirstOrDefault()
+                    ?? new DashboardTicketsViewModel();
+
+                Usuarios = await tareaUsuarios
+                    ?? new UsuariosViewModel[0];
+
                 return Page();
-
-
             }
             catch (ApiException ex)
             {
+                logger.LogError(ex, "No fue posible cargar el dashboard de tiquetes.");
 
-                Errores error = JsonConvert.DeserializeObject<Errores>(ex.Content.ToString());
-                ModelState.AddModelError(string.Empty, error.Message);
+                Dashboard = new DashboardTicketsViewModel();
+                Usuarios = Usuarios ?? new UsuariosViewModel[0];
+
+                var mensaje = ex.Message;
+
+                if (!string.IsNullOrWhiteSpace(ex.Content))
+                {
+                    try
+                    {
+                        var error = JsonConvert.DeserializeObject<Errores>(ex.Content);
+                        mensaje = error?.Message ?? ex.Content;
+                    }
+                    catch
+                    {
+                        mensaje = ex.Content;
+                    }
+                }
+
+                ModelState.AddModelError(string.Empty, mensaje);
+                return Page();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error cargando el dashboard de tiquetes.");
+                Dashboard = new DashboardTicketsViewModel();
+                Usuarios = Usuarios ?? new UsuariosViewModel[0];
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "No fue posible cargar el dashboard. " + ex.Message
+                );
 
                 return Page();
             }
         }
     }
 }
+

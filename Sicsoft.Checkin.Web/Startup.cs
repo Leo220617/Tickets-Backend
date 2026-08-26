@@ -148,7 +148,9 @@ namespace Sicsoft.Checkin.Web
 .AddHttpMessageHandler<AuthenticatedHttpClientHandler>();
 
 
-
+            services.AddRefitClient<ICrudApi<CorreoEnvioViewModel, int>>()
+.ConfigureHttpClient(c => c.BaseAddress = new Uri($"{Configuration["UrlWebApi"]}/api/CorreoEnvio"))
+.AddHttpMessageHandler<AuthenticatedHttpClientHandler>();
 
 
             services.AddRefitClient<ICrudApi<TiquetesViewModel, int>>()
@@ -178,6 +180,11 @@ namespace Sicsoft.Checkin.Web
             services.AddRefitClient<ICrudApi<RespuestasViewModel, int>>()
    .ConfigureHttpClient(c => c.BaseAddress = new Uri($"{Configuration["UrlWebApi"]}/api/Respuestas"))
    .AddHttpMessageHandler<AuthenticatedHttpClientHandler>();
+
+            services.AddRefitClient<ICrudApi<DashboardTicketsViewModel, int>>()
+    .ConfigureHttpClient(c => c.BaseAddress =
+        new Uri($"{Configuration["UrlWebApi"]}/api/DashboardTickets"))
+    .AddHttpMessageHandler<AuthenticatedHttpClientHandler>();
 
 
             return services;

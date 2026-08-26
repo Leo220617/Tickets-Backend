@@ -17,381 +17,607 @@
 @using System.Security.Claims
 
 @section styles {
-    <link rel="stylesheet" href="~/lib/dropzone/basic.css" />
-    <link rel="stylesheet" href="~/lib/dropzone/dropzone.css" />
-    <style>
-        body {
-            background: #f2f3f3;
+            <link rel="stylesheet" href="~/lib/dropzone/basic.css" />
+            <link rel="stylesheet" href="~/lib/dropzone/dropzone.css" />
+            <style>
+                body {
+                    background: #f2f3f3;
+                }
+
+                .support-page {
+                    max-width: 1500px;
+                    margin: 0 auto;
+                    padding: 0 1rem 3rem;
+                }
+
+                .console-bar {
+                    background: #131e29;
+                    color: #fff;
+                    margin: 0 -1rem 1rem;
+                    padding: .72rem 1.25rem;
+                    border-bottom: 3px solid #ff9900;
+                }
+
+                .console-brand {
+                    font-size: .95rem;
+                    font-weight: 700;
+                    letter-spacing: .02em;
+                }
+
+                    .console-brand i {
+                        color: #ff9900;
+                    }
+
+                .support-header {
+                    background: #fff;
+                    color: #161e2d;
+                    border: 1px solid #d5dbdb;
+                    border-radius: 3px;
+                    padding: 1rem 1.25rem;
+                    box-shadow: none;
+                }
+
+                    .support-header .ticket-number {
+                        color: rgba(255,255,255,.72);
+                        font-size: .85rem;
+                        letter-spacing: .08em;
+                        text-transform: uppercase;
+                    }
+
+                    .support-header .ticket-number {
+                        color: #687078;
+                        letter-spacing: .03em;
+                    }
+
+                .support-card {
+                    border: 1px solid #d5dbdb;
+                    border-radius: 3px;
+                    box-shadow: none;
+                    overflow: hidden;
+                }
+
+                    .support-card .card-header {
+                        background: #fafafa;
+                        border-bottom: 1px solid #d5dbdb;
+                        padding: .8rem 1rem;
+                    }
+
+                    .support-card .card-body {
+                        padding: 1.25rem;
+                    }
+
+                .section-icon {
+                    width: 32px;
+                    height: 32px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 2px;
+                    background: #e7f1f7;
+                    color: #0073bb;
+                }
+
+                .meta-label {
+                    display: block;
+                    color: #718096;
+                    font-size: .76rem;
+                    font-weight: 700;
+                    letter-spacing: .04em;
+                    text-transform: uppercase;
+                    margin-bottom: .2rem;
+                }
+
+                .request-box {
+                    min-height: 260px;
+                    white-space: pre-wrap;
+                    background: #f8fafc;
+                    border: 1px solid #edf0f3;
+                    border-radius: 12px;
+                    padding: 1.25rem;
+                    color: #263442;
+                }
+
+                .reply-box {
+                    min-height: 240px !important;
+                    height: auto !important;
+                    border-radius: 10px;
+                }
+
+                .message-editor {
+                    display: block;
+                    width: 100%;
+                    min-height: 240px !important;
+                    height: auto !important;
+                    overflow: visible;
+                    white-space: pre-wrap;
+                    overflow-wrap: anywhere;
+                }
+
+                    .message-editor img {
+                        display: block;
+                        max-width: 100%;
+                        height: auto;
+                        margin: 12px 0;
+                        border-radius: 6px;
+                    }
+
+                .reply-card {
+                    border-top: 3px solid #ff9900;
+                }
+
+                .composer-tabs {
+                    display: flex;
+                    border-bottom: 1px solid #d5dbdb;
+                    margin: -1.25rem -1.25rem 1.25rem;
+                    background: #fafafa;
+                }
+
+                .composer-tab {
+                    border: 0;
+                    border-right: 1px solid #d5dbdb;
+                    background: transparent;
+                    padding: .8rem 1.2rem;
+                    color: #414d5c;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+
+                    .composer-tab.active {
+                        color: #0073bb;
+                        background: #fff;
+                        box-shadow: inset 0 -3px #ff9900;
+                    }
+
+                .composer-panel {
+                    display: none;
+                }
+
+                    .composer-panel.active {
+                        display: block;
+                    }
+
+                .case-status {
+                    display: inline-flex;
+                    align-items: center;
+                    background: #e6f6ed;
+                    color: #1d8102;
+                    border: 1px solid #a8d5ba;
+                    border-radius: 12px;
+                    padding: .18rem .65rem;
+                    font-size: .78rem;
+                    font-weight: 700;
+                }
+
+                    .case-status:before {
+                        content: '';
+                        width: 7px;
+                        height: 7px;
+                        background: #1d8102;
+                        border-radius: 50%;
+                        margin-right: .4rem;
+                    }
+
+                .btn-amazon {
+                    background: #ff9900;
+                    border-color: #e88b00;
+                    color: #161e2d;
+                    font-weight: 700;
+                }
+
+                    .btn-amazon:hover {
+                        background: #ec8f00;
+                        color: #161e2d;
+                    }
+
+                .timer {
+                    font-variant-numeric: tabular-nums;
+                    font-size: 2rem;
+                    font-weight: 700;
+                    color: #173b67;
+                    letter-spacing: .04em;
+                }
+
+                .timer-actions .btn {
+                    width: 42px;
+                    height: 38px;
+                }
+
+                .dropzone {
+                    border: 2px dashed #b8cad9;
+                    border-radius: 12px;
+                    background: #f8fbfd;
+                    min-height: 130px;
+                }
+
+                .sticky-actions {
+                    position: sticky;
+                    bottom: 0;
+                    z-index: 10;
+                    background: rgba(242,243,243,.97);
+                    border-top: 1px solid #d5dbdb;
+                    padding: 1rem 0;
+                    margin-top: 1.25rem;
+                }
+
+                .attachment-preview {
+                    width: 100%;
+                    max-height: 420px;
+                    object-fit: contain;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 10px;
+                    background: #f8fafc;
+                }
+
+                .conversation {
+                    position: relative;
+                    padding-left: 46px;
+                }
+
+                    .conversation:before {
+                        content: '';
+                        position: absolute;
+                        top: 8px;
+                        bottom: 8px;
+                        left: 18px;
+                        width: 2px;
+                        background: #d5dbdb;
+                    }
+
+                .message-row {
+                    position: relative;
+                    margin-bottom: 1.1rem;
+                }
+
+                .message-avatar {
+                    position: absolute;
+                    left: -46px;
+                    top: 0;
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #fff;
+                    background: #687078;
+                    border: 3px solid #f2f3f3;
+                    z-index: 1;
+                }
+
+                .message-row.client .message-avatar {
+                    background: #526d82;
+                }
+
+                .message-row.support .message-avatar {
+                    background: #0073bb;
+                }
+
+                .message-row.internal .message-avatar {
+                    background: #ff9900;
+                    color: #161e2d;
+                }
+
+                .message-card {
+                    border: 1px solid #d5dbdb;
+                    border-radius: 3px;
+                    background: #fff;
+                }
+
+                .message-row.support .message-card {
+                    border-color: #8ac7e8;
+                    border-left: 5px solid #0073bb;
+                    background: #f2f9fd;
+                }
+
+                .message-row.client .message-card {
+                    border-color: #b8c7d1;
+                    border-left: 5px solid #526d82;
+                    background: #f5f7f9;
+                }
+
+                .message-row.internal .message-card {
+                    border-color: #f3c66d;
+                    border-left: 5px solid #ff9900;
+                    background: #fff8e7;
+                }
+
+                .message-header {
+                    padding: .75rem 1rem;
+                    border-bottom: 1px solid #eaeded;
+                    background: #fafafa;
+                }
+
+                .message-row.client .message-header {
+                    background: #e8eef2;
+                    color: #334b5c;
+                }
+
+                .message-row.support .message-header {
+                    background: #e5f3fa;
+                    color: #00689d;
+                }
+
+                .message-row.internal .message-header {
+                    background: #fff0c7;
+                    color: #6b4b00;
+                }
+
+                .message-type {
+                    display: inline-block;
+                    margin-left: .5rem;
+                    padding: .16rem .5rem;
+                    border-radius: 10px;
+                    font-size: .72rem;
+                    font-weight: 700;
+                }
+
+                .message-row.client .message-type {
+                    background: #526d82;
+                    color: #fff;
+                }
+
+                .message-row.support .message-type {
+                    background: #0073bb;
+                    color: #fff;
+                }
+
+                .message-row.internal .message-type {
+                    background: #ff9900;
+                    color: #161e2d;
+                }
+
+                .message-body {
+                    padding: 1rem;
+                    color: #263442;
+                    white-space: pre-wrap;
+                    overflow-wrap: anywhere;
+                }
+
+                .message-editor:empty:before {
+                    content: attr(data-placeholder);
+                    color: #8a949e;
+                    pointer-events: none;
+                }
+
+                .message-editor img,
+                .message-body img {
+                    display: block;
+                    max-width: 100%;
+                    height: auto;
+                    margin: .75rem 0;
+                    border-radius: 6px;
+                }
+
+        .lista-adjuntos {
+            display: grid;
+            gap: 10px;
         }
 
-        .support-page {
-            max-width: 1500px;
-            margin: 0 auto;
-            padding: 0 1rem 3rem;
-        }
-
-        .console-bar {
-            background: #131e29;
-            color: #fff;
-            margin: 0 -1rem 1rem;
-            padding: .72rem 1.25rem;
-            border-bottom: 3px solid #ff9900;
-        }
-
-        .console-brand {
-            font-size: .95rem;
-            font-weight: 700;
-            letter-spacing: .02em;
-        }
-
-            .console-brand i {
-                color: #ff9900;
-            }
-
-        .support-header {
+        .archivo-adjunto {
+            display: flex;
+            align-items: center;
+            min-height: 58px;
+            padding: 10px 13px;
+            border: 1px solid #d5dbdb;
+            border-radius: 6px;
             background: #fff;
-            color: #161e2d;
-            border: 1px solid #d5dbdb;
-            border-radius: 3px;
-            padding: 1rem 1.25rem;
-            box-shadow: none;
+            color: #34465a;
+            text-decoration: none !important;
         }
 
-            .support-header .ticket-number {
-                color: rgba(255,255,255,.72);
-                font-size: .85rem;
-                letter-spacing: .08em;
-                text-transform: uppercase;
+            .archivo-adjunto:hover {
+                border-color: #0073bb;
+                background: #eef7fc;
             }
 
-            .support-header .ticket-number {
-                color: #687078;
-                letter-spacing: .03em;
-            }
-
-        .support-card {
-            border: 1px solid #d5dbdb;
-            border-radius: 3px;
-            box-shadow: none;
-            overflow: hidden;
-        }
-
-            .support-card .card-header {
-                background: #fafafa;
-                border-bottom: 1px solid #d5dbdb;
-                padding: .8rem 1rem;
-            }
-
-            .support-card .card-body {
-                padding: 1.25rem;
-            }
-
-        .section-icon {
-            width: 32px;
-            height: 32px;
+        .archivo-icono {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 2px;
-            background: #e7f1f7;
-            color: #0073bb;
-        }
-
-        .meta-label {
-            display: block;
-            color: #718096;
-            font-size: .76rem;
-            font-weight: 700;
-            letter-spacing: .04em;
-            text-transform: uppercase;
-            margin-bottom: .2rem;
-        }
-
-        .request-box {
-            min-height: 260px;
-            white-space: pre-wrap;
-            background: #f8fafc;
-            border: 1px solid #edf0f3;
-            border-radius: 12px;
-            padding: 1.25rem;
-            color: #263442;
-        }
-
-        .reply-box {
-            min-height: 240px !important;
-            height: auto !important;
-            border-radius: 10px;
-        }
-
-        .message-editor {
-            display: block;
-            width: 100%;
-            min-height: 240px !important;
-            height: auto !important;
-            overflow: visible;
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-        }
-
-            .message-editor img {
-                display: block;
-                max-width: 100%;
-                height: auto;
-                margin: 12px 0;
-                border-radius: 6px;
-            }
-
-        .reply-card {
-            border-top: 3px solid #ff9900;
-        }
-
-        .composer-tabs {
-            display: flex;
-            border-bottom: 1px solid #d5dbdb;
-            margin: -1.25rem -1.25rem 1.25rem;
-            background: #fafafa;
-        }
-
-        .composer-tab {
-            border: 0;
-            border-right: 1px solid #d5dbdb;
-            background: transparent;
-            padding: .8rem 1.2rem;
-            color: #414d5c;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-            .composer-tab.active {
-                color: #0073bb;
-                background: #fff;
-                box-shadow: inset 0 -3px #ff9900;
-            }
-
-        .composer-panel {
-            display: none;
-        }
-
-            .composer-panel.active {
-                display: block;
-            }
-
-        .case-status {
-            display: inline-flex;
-            align-items: center;
-            background: #e6f6ed;
-            color: #1d8102;
-            border: 1px solid #a8d5ba;
-            border-radius: 12px;
-            padding: .18rem .65rem;
-            font-size: .78rem;
-            font-weight: 700;
-        }
-
-            .case-status:before {
-                content: '';
-                width: 7px;
-                height: 7px;
-                background: #1d8102;
-                border-radius: 50%;
-                margin-right: .4rem;
-            }
-
-        .btn-amazon {
-            background: #ff9900;
-            border-color: #e88b00;
-            color: #161e2d;
-            font-weight: 700;
-        }
-
-            .btn-amazon:hover {
-                background: #ec8f00;
-                color: #161e2d;
-            }
-
-        .timer {
-            font-variant-numeric: tabular-nums;
-            font-size: 2rem;
-            font-weight: 700;
-            color: #173b67;
-            letter-spacing: .04em;
-        }
-
-        .timer-actions .btn {
-            width: 42px;
-            height: 38px;
-        }
-
-        .dropzone {
-            border: 2px dashed #b8cad9;
-            border-radius: 12px;
-            background: #f8fbfd;
-            min-height: 130px;
-        }
-
-        .sticky-actions {
-            position: sticky;
-            bottom: 0;
-            z-index: 10;
-            background: rgba(242,243,243,.97);
-            border-top: 1px solid #d5dbdb;
-            padding: 1rem 0;
-            margin-top: 1.25rem;
-        }
-
-        .attachment-preview {
-            width: 100%;
-            max-height: 420px;
-            object-fit: contain;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            background: #f8fafc;
-        }
-
-        .conversation {
-            position: relative;
-            padding-left: 46px;
-        }
-
-            .conversation:before {
-                content: '';
-                position: absolute;
-                top: 8px;
-                bottom: 8px;
-                left: 18px;
-                width: 2px;
-                background: #d5dbdb;
-            }
-
-        .message-row {
-            position: relative;
-            margin-bottom: 1.1rem;
-        }
-
-        .message-avatar {
-            position: absolute;
-            left: -46px;
-            top: 0;
+            flex: 0 0 38px;
             width: 38px;
             height: 38px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            background: #687078;
-            border: 3px solid #f2f3f3;
-            z-index: 1;
-        }
-
-        .message-row.client .message-avatar {
-            background: #526d82;
-        }
-
-        .message-row.support .message-avatar {
-            background: #0073bb;
-        }
-
-        .message-row.internal .message-avatar {
-            background: #ff9900;
-            color: #161e2d;
-        }
-
-        .message-card {
-            border: 1px solid #d5dbdb;
-            border-radius: 3px;
-            background: #fff;
-        }
-
-        .message-row.support .message-card {
-            border-color: #8ac7e8;
-            border-left: 5px solid #0073bb;
-            background: #f2f9fd;
-        }
-
-        .message-row.client .message-card {
-            border-color: #b8c7d1;
-            border-left: 5px solid #526d82;
-            background: #f5f7f9;
-        }
-
-        .message-row.internal .message-card {
-            border-color: #f3c66d;
-            border-left: 5px solid #ff9900;
-            background: #fff8e7;
-        }
-
-        .message-header {
-            padding: .75rem 1rem;
-            border-bottom: 1px solid #eaeded;
-            background: #fafafa;
-        }
-
-        .message-row.client .message-header {
-            background: #e8eef2;
-            color: #334b5c;
-        }
-
-        .message-row.support .message-header {
-            background: #e5f3fa;
-            color: #00689d;
-        }
-
-        .message-row.internal .message-header {
-            background: #fff0c7;
-            color: #6b4b00;
-        }
-
-        .message-type {
-            display: inline-block;
-            margin-left: .5rem;
-            padding: .16rem .5rem;
-            border-radius: 10px;
-            font-size: .72rem;
-            font-weight: 700;
-        }
-
-        .message-row.client .message-type {
-            background: #526d82;
-            color: #fff;
-        }
-
-        .message-row.support .message-type {
-            background: #0073bb;
-            color: #fff;
-        }
-
-        .message-row.internal .message-type {
-            background: #ff9900;
-            color: #161e2d;
-        }
-
-        .message-body {
-            padding: 1rem;
-            color: #263442;
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-        }
-
-        .message-editor:empty:before {
-            content: attr(data-placeholder);
-            color: #8a949e;
-            pointer-events: none;
-        }
-
-        .message-editor img,
-        .message-body img {
-            display: block;
-            max-width: 100%;
-            height: auto;
-            margin: .75rem 0;
+            margin-right: 11px;
             border-radius: 6px;
+            background: #eaeded;
+            color: #0073bb;
+            font-size: 18px;
         }
-    </style>
+
+        .archivo-nombre {
+            overflow: hidden;
+            flex: 1;
+            font-weight: 600;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .archivo-descarga {
+            margin-left: 10px;
+            color: #1f7a45;
+        }
+        /* Tarjetas de archivos de Dropzone */
+#dropzoneForm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 22px;
+}
+
+#dropzoneForm .dz-message {
+    width: 100%;
+    margin: 2rem 0;
+}
+
+#dropzoneForm .dz-preview {
+    width: 150px;
+    min-height: 185px;
+    margin: 0;
+    padding: 12px;
+    border: 1px solid #d5dbdb;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .08);
+}
+
+#dropzoneForm .dz-preview:hover {
+    border-color: #0073bb;
+    box-shadow: 0 3px 9px rgba(0, 115, 187, .16);
+}
+
+#dropzoneForm .dz-preview .dz-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 82px;
+    height: 82px;
+    margin: 0 auto 10px;
+    border-radius: 10px;
+    background: #f3f4f5;
+    overflow: hidden;
+}
+
+#dropzoneForm .dz-preview .dz-image img {
+    display: none;
+}
+
+/* Ícono principal del archivo */
+.dz-file-icon {
+    font-size: 48px;
+}
+
+.dz-file-icon.pdf {
+    color: #d13212;
+}
+
+.dz-file-icon.excel {
+    color: #1f7a45;
+}
+
+.dz-file-icon.word {
+    color: #1769aa;
+}
+
+.dz-file-icon.csv {
+    color: #14815d;
+}
+
+.dz-file-icon.image {
+    color: #7b61a8;
+}
+
+.dz-file-icon.default {
+    color: #687078;
+}
+
+/* Nombre del archivo */
+#dropzoneForm .dz-preview .dz-details {
+    position: static;
+    min-width: 0;
+    padding: 0;
+    color: #34465a;
+    opacity: 1;
+    text-align: center;
+}
+
+#dropzoneForm .dz-preview .dz-details .dz-size {
+    margin: 0 0 6px;
+    font-size: 12px;
+    color: #687078;
+}
+
+#dropzoneForm .dz-preview .dz-details .dz-filename {
+    max-width: 100%;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+#dropzoneForm .dz-preview .dz-details .dz-filename span {
+    display: block;
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Ocultar controles visuales que solo sirven para carga automática */
+#dropzoneForm .dz-preview .dz-progress,
+#dropzoneForm .dz-preview .dz-success-mark,
+#dropzoneForm .dz-preview .dz-error-mark,
+#dropzoneForm .dz-preview .dz-error-message {
+    display: none;
+}
+
+/* Botón eliminar */
+#dropzoneForm .dz-preview .dz-remove {
+    display: block;
+    margin-top: 10px;
+    padding: 5px 8px;
+    border: 1px solid #d13212;
+    border-radius: 4px;
+    color: #d13212;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+#dropzoneForm .dz-preview .dz-remove:hover {
+    background: #d13212;
+    color: #fff;
+}
+
+media (max-width: 576px) {
+    #dropzoneForm .dz-preview {
+        width: calc(50% - 8px);
+    }
+}
+
+        .case-status.status-open {
+            border-color: #acd6bf;
+            background: #edf8f1;
+            color: #1f7a45;
+        }
+
+        .case-status.status-validation {
+            border-color: #f1cd8f;
+            background: #fff8e8;
+            color: #9b5d00;
+        }
+
+        .case-status.status-waiting {
+            border-color: #b8d8eb;
+            background: #eef7fc;
+            color: #005a8c;
+        }
+
+        .case-status.status-closed {
+            border-color: #d5dbdb;
+            background: #f2f3f3;
+            color: #59636e;
+        }
+
+        .case-status.status-reopened {
+            border-color: #f2aaa0;
+            background: #fff0ee;
+            color: #b12704;
+        }
+
+        .reopen-date {
+            display: block;
+            margin-top: 5px;
+            color: #b12704;
+            font-size: 11px;
+            font-weight: 600;
+        }
+            </style>
 }
 
 <form method="post" id="formTipos" enctype="multipart/form-data">
     <input type="hidden" asp-for="Tiquete.id" id="TicketId" />
+    <input type="hidden"id="UrlIndexTiquetes"value="@Url.Page("./Index")" />
     <input type="hidden" asp-for="Tiquete.Duracion" id="Duracion" />
     <input type="hidden" asp-for="Tiquete.Adjunto" id="Adjunto" />
 
@@ -402,7 +628,48 @@
                 <div>
                     <div class="ticket-number">Solicitud de soporte #@Model.Tiquete.id</div>
                     <h2 class="mb-1 mt-1">@Model.Tiquete.Asunto</h2>
-                    <div class="mt-2"><span class="case-status">Abierto</span></div>
+                    @{
+                        var estadoTexto = "Espera";
+                        var estadoClase = "status-waiting";
+
+                        switch (Model.Tiquete.Status)
+                        {
+                            case "A":
+                                estadoTexto = Model.Tiquete.FechaReapertura.HasValue
+                                ? "Reabierto"
+                                : "Abierto";
+
+                                estadoClase = Model.Tiquete.FechaReapertura.HasValue
+                                ? "status-reopened"
+                                : "status-open";
+                                break;
+
+                            case "V":
+                                estadoTexto = "Validación";
+                                estadoClase = "status-validation";
+                                break;
+
+                            case "C":
+                                estadoTexto = "Cerrado";
+                                estadoClase = "status-closed";
+                                break;
+                        }
+                    }
+
+                    <div class="mt-2">
+                        <span class="case-status @estadoClase">
+                            @estadoTexto
+                        </span>
+
+                        @if (Model.Tiquete.Status == "A" &&
+                        Model.Tiquete.FechaReapertura.HasValue)
+                        {
+                            <small class="reopen-date">
+                                <i class="fa fa-history mr-1"></i>
+                                @Model.Tiquete.FechaReapertura.Value.ToString("dd/MM/yyyy HH:mm")
+                            </small>
+                        }
+                    </div>
                 </div>
                 <a asp-page="./Index" class="btn btn-outline-secondary mt-3 mt-md-0">
                     <i class="fa fa-arrow-left mr-2"></i>Volver a tiquetes
@@ -466,23 +733,23 @@
                                     var claseMensaje = item.EsNotaInterna ? "internal" : (esCliente ? "client" : "support");
                                     var autor = item.EsNotaInterna ? (usuario == null ? "Equipo de soporte" : usuario.Nombre) : (esCliente ? Model.Tiquete.PersonaTicket : (usuario == null ? "Soporte" : usuario.Nombre));
 
-                                    <article class="message-row @claseMensaje">
-                                        <div class="message-avatar">
-                                            <i class="fa @(item.EsNotaInterna ? "fa-lock" : (esCliente ? "fa-user" : "fa-headset"))"></i>
-                                        </div>
-                                        <div class="message-card">
-                                            <div class="message-header d-flex justify-content-between align-items-start">
-                                                <div>
-                                                    <strong>@autor</strong>
-                                                    <span class="message-type">
+                                                    <article class="message-row @claseMensaje">
+                                                        <div class="message-avatar">
+                                                            <i class="fa @(item.EsNotaInterna ? "fa-lock" : (esCliente ? "fa-user" : "fa-headset"))"></i>
+                                                        </div>
+                                                        <div class="message-card">
+                                                            <div class="message-header d-flex justify-content-between align-items-start">
+                                                                <div>
+                                                                    <strong>@autor</strong>
+                                                                    <span class="message-type">
                                                         @(item.EsNotaInterna ? "Nota interna" : (esCliente ? "Cliente" : "Soporte"))
-                                                    </span>
-                                                </div>
-                                                <small class="text-muted">@item.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</small>
-                                            </div>
-                                            <div class="message-body">@Html.Raw(item.Respuesta)</div>
-                                        </div>
-                                    </article>
+                                                                    </span>
+                                                                </div>
+                                                                <small class="text-muted">@item.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</small>
+                                                            </div>
+                                                            <div class="message-body">@Html.Raw(item.Respuesta)</div>
+                                                        </div>
+                                                    </article>
                                 }
                             }
                         </div>
@@ -502,6 +769,24 @@
                         @*       asp-for="Tiquete.Respuesta"
                         asp-validation-for="Tiquete.Respuesta" *@
                         <div id="respuestaPanel" class="composer-panel active">
+                            <div class="form-group">
+    <label for="DestinatariosRespuesta" class="font-weight-bold">
+        <i class="fa fa-envelope mr-1"></i>
+        Destinatarios
+    </label>
+
+    <input type="text"
+           id="DestinatariosRespuesta"
+           name="destinatarios"
+           class="form-control"
+           value="@Model.Tiquete.PersonaTicket"
+           placeholder="correo1@empresa.com; correo2@empresa.com"
+           autocomplete="off" />
+
+    <small class="form-text text-muted">
+        Puede agregar varios correos separados por punto y coma o coma.
+    </small>
+</div>
                             <label for="inputRespuesta" class="font-weight-bold">Respuesta al cliente</label>
                             <div class="form-control reply-box message-editor"
                                  id="inputRespuesta"
@@ -527,14 +812,27 @@
 
                         <div class="mt-4">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="font-weight-bold mb-0">Adjuntar evidencia</label>
-                                <button type="button" class="btn btn-link btn-sm" onclick="abrirModal()">
+                                <label class="font-weight-bold mb-0">
+                                    <i class="fa fa-paperclip mr-1"></i>
+                                    Adjuntar archivos
+                                </label>
+                                <button type="button" class="btn btn-link btn-sm" onclick="abrirModalAdjuntos()">
                                     <i class="fa fa-paperclip mr-1"></i>Ver adjuntos actuales
                                 </button>
                             </div>
                             <div class="dropzone" id="dropzoneForm">
-                                <div class="fallback"><input name="file" type="file" multiple /></div>
+                                <div class="fallback">
+                                    <input name="file"
+                                           type="file"
+                                           multiple
+                                           accept=".png,.jpg,.jpeg,.pdf,.xls,.xlsx,.doc,.docx,.csv" />
+                                </div>
                             </div>
+
+                            <small class="form-text text-muted">
+                                Formatos permitidos: PDF, Excel, Word, CSV, PNG y JPG.
+                                Máximo 5 archivos y 18 MB en total.
+                            </small>
                         </div>
                     </div>
                 </section>
@@ -545,6 +843,20 @@
                     <div class="card-header"><h5 class="mb-0">Información del tiquete</h5></div>
                     <div class="card-body">
                         <div class="mb-3"><span class="meta-label">Creado el</span><input class="form-control" asp-for="Tiquete.FechaTicket" type="date" readonly /></div>
+                        @if (Model.Tiquete.FechaReapertura != null)
+                        {
+                            <div class="mb-3">
+                                <span class="meta-label">Última reapertura</span>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fa fa-history"></i>
+                                        </span>
+                                    </div>
+                                    <input class="form-control" value="@Model.Tiquete.FechaReapertura.Value.ToString("dd/MM/yyyy HH:mm")" readonly />
+                                </div>
+                            </div>
+                        }
                         <div class="mb-3"><span class="meta-label">Solicitante</span><input class="form-control" asp-for="Tiquete.PersonaTicket" readonly /></div>
                         <div class="mb-3"><span class="meta-label">Asunto</span><input class="form-control" asp-for="Tiquete.Asunto" readonly /></div>
 
@@ -552,18 +864,18 @@
                             <label asp-for="Tiquete.idLoginAsignado" class="meta-label">Agente asignado</label>
                             @if (puedeAsignar)
                             {
-                                <select asp-for="Tiquete.idLoginAsignado" class="form-control">
-                                    <option value="0">Seleccione un agente</option>
+                                        <select asp-for="Tiquete.idLoginAsignado" class="form-control">
+                                            <option value="0">Seleccione un agente</option>
                                     @foreach (var item in Model.Usuarios)
                                     {
-                                        <option value="@item.id">@item.Nombre</option>
+                                                        <option value="@item.id">@item.Nombre</option>
                                     }
-                                </select>
+                                        </select>
                             }
                             else
                             {
-                                <input asp-for="Tiquete.idLoginAsignado" type="hidden" />
-                                <input class="form-control" value="@(Model.Usuarios.FirstOrDefault(a => a.id == Model.Tiquete.idLoginAsignado)?.Nombre ?? "Sin asignar")" readonly />
+                                        <input asp-for="Tiquete.idLoginAsignado" type="hidden" />
+                                        <input class="form-control" value="@(Model.Usuarios.FirstOrDefault(a => a.id == Model.Tiquete.idLoginAsignado)?.Nombre ?? "Sin asignar")" readonly />
                             }
                         </div>
 
@@ -571,18 +883,18 @@
                             <label asp-for="Tiquete.idEmpresa" class="meta-label">Empresa</label>
                             @if (puedeCambiarEmpresa)
                             {
-                                <select asp-for="Tiquete.idEmpresa" class="form-control">
-                                    <option value="0">Seleccione una empresa</option>
+                                        <select asp-for="Tiquete.idEmpresa" class="form-control">
+                                            <option value="0">Seleccione una empresa</option>
                                     @foreach (var item in Model.Empresas)
                                     {
-                                        <option value="@item.id">@item.Nombre</option>
+                                                        <option value="@item.id">@item.Nombre</option>
                                     }
-                                </select>
+                                        </select>
                             }
                             else
                             {
-                                <input asp-for="Tiquete.idEmpresa" type="hidden" />
-                                <input class="form-control" value="@(Model.Empresas.FirstOrDefault(a => a.id == Model.Tiquete.idEmpresa)?.Nombre ?? "Sin empresa")" readonly />
+                                        <input asp-for="Tiquete.idEmpresa" type="hidden" />
+                                        <input class="form-control" value="@(Model.Empresas.FirstOrDefault(a => a.id == Model.Tiquete.idEmpresa)?.Nombre ?? "Sin empresa")" readonly />
                             }
                         </div>
 
@@ -601,26 +913,105 @@
                 </section>
 
                 <section class="card support-card mb-4">
-                    <div class="card-header"><h5 class="mb-0"><i class="fa fa-clock mr-2 text-primary"></i>Tiempo de atención</h5></div>
-                    <div class="card-body text-center">
-                        <div id="hms" class="timer mb-3">00:00:00</div>
-                        <div class="timer-actions mb-4">
-                            <button type="button" class="btn btn-success start" title="Iniciar"><i class="fa fa-play"></i></button>
-                            <button type="button" class="btn btn-danger stop" title="Pausar"><i class="fa fa-stop"></i></button>
-                            @if (puedeReiniciarTiempo)
-                            {
-                                <button type="button" class="btn btn-outline-secondary reiniciar" title="Reiniciar"><i class="fa fa-redo"></i></button>
-                            }
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fa fa-clock-o mr-2 text-primary"></i>
+                            Control de tiempo
+                        </h5>
+                    </div>
+
+                    <div class="card-body">
+                        <input type="hidden"
+                               id="DuracionReal"
+                               asp-for="Tiquete.DuracionReal" />
+
+                        <input type="hidden"
+                               id="DuracionEstimada"
+                               asp-for="Tiquete.DuracionEstimada" />
+
+                        <div class="mb-4">
+                            <label class="meta-label">Tiempo acumulado</label>
+
+                            <div id="TiempoAcumulado"
+                                 class="alert alert-info text-center mb-0"
+                                 style="font-size:22px; font-weight:bold;">
+                                0 horas 0 minutos
+                            </div>
                         </div>
-                        <div class="text-left mb-3"><label asp-for="Tiquete.DuracionEstimada" class="meta-label">Duración estimada</label><input class="form-control" asp-for="Tiquete.DuracionEstimada" type="time" /></div>
-                        @if (puedeEditarDuracionReal)
-                        {
-                            <div class="text-left"><label asp-for="Tiquete.DuracionReal" class="meta-label">Duración real</label><input class="form-control" id="DuracionReal" asp-for="Tiquete.DuracionReal" /></div>
-                        }
-                        else
-                        {
-                            <input type="hidden" id="DuracionReal" asp-for="Tiquete.DuracionReal" />
-                        }
+
+                        <div class="mb-4">
+                            <label class="meta-label">Tiempo invertido a agregar</label>
+
+                            <div class="row">
+                                <div class="col-6">
+                                    <label for="TiempoHoras" class="small text-muted">
+                                        Horas
+                                    </label>
+                                    <input type="number"
+                                           id="TiempoHoras"
+                                           name="TiempoHoras"
+                                           class="form-control"
+                                           min="0"
+                                           max="999"
+                                           step="1"
+                                           value="0" />
+                                </div>
+
+                                <div class="col-6">
+                                    <label for="TiempoMinutos" class="small text-muted">
+                                        Minutos
+                                    </label>
+                                    <input type="number"
+                                           id="TiempoMinutos"
+                                           name="TiempoMinutos"
+                                           class="form-control"
+                                           min="0"
+                                           max="59"
+                                           step="1"
+                                           value="0" />
+                                </div>
+                            </div>
+
+                            <small class="form-text text-muted">
+                                Este tiempo se sumará al tiempo acumulado al guardar.
+                            </small>
+                        </div>
+
+                        <div>
+                            <label class="meta-label">Duración estimada</label>
+
+                            <div class="row">
+                                <div class="col-6">
+                                    <label for="EstimadoHoras" class="small text-muted">
+                                        Horas
+                                    </label>
+
+                                    <input type="number"
+                                           id="EstimadoHoras"
+                                           name="EstimadoHoras"
+                                           class="form-control"
+                                           min="0"
+                                           max="999"
+                                           step="1"
+                                           value="0" />
+                                </div>
+
+                                <div class="col-6">
+                                    <label for="EstimadoMinutos" class="small text-muted">
+                                        Minutos
+                                    </label>
+
+                                    <input type="number"
+                                           id="EstimadoMinutos"
+                                           name="EstimadoMinutos"
+                                           class="form-control"
+                                           min="0"
+                                           max="59"
+                                           step="1"
+                                           value="0" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -629,7 +1020,17 @@
 
         <div class="sticky-actions">
             <div class="d-flex justify-content-end">
-                <a asp-page="./Index" class="btn btn-light mr-2">Cancelar</a>
+                @if (Roles.Contains("2"))
+                {
+                    <button type="button" id="UnificarTiquete" class="btn btn-outline-secondary mr-2">
+                        <i class="fa fa-link mr-2"></i>Unificar tiquete
+                    </button>
+                }
+
+                <a asp-page="./Index" class="btn btn-light mr-2">
+                    Cancelar
+                </a>
+
                 <button type="button" id="GuardarCambios" class="btn btn-amazon px-4">
                     <i class="fa fa-save mr-2"></i>Guardar cambios
                 </button>
@@ -639,11 +1040,25 @@
 </form>
 
 <div class="modal fade" id="modalAdjuntos" tabindex="-1" role="dialog" aria-labelledby="tituloAdjuntos" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-header"><h5 class="modal-title" id="tituloAdjuntos">Adjuntos del tiquete</h5><button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button></div>
-            <div class="modal-body"><div class="row"><div class="col-md-6 mb-3"><img src="" class="attachment-preview" id="src1" alt="Primer adjunto" /></div><div class="col-md-6 mb-3"><img src="" class="attachment-preview" id="src2" alt="Segundo adjunto" /></div></div></div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button></div>
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloAdjuntos">
+                    <i class="fa fa-paperclip mr-2"></i>
+                    Adjuntos del tiquete
+                </h5>
+                <button type="button" class="close" aria-label="Cerrar" onclick="cerrarModalAdjuntos()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="listaAdjuntos" class="lista-adjuntos"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalAdjuntos()">
+                    Cerrar
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -665,9 +1080,63 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    <script src="~/lib/dropzone/dropzone.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="~/js/Tickets/EditarTicket.js"></script>
+            <script src="~/lib/dropzone/dropzone.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <script src="~/js/Tickets/EditarTicket.js"></script>
+    <script>
+        window.abrirModalAdjuntos = function () {
+            var modal = document.getElementById('modalAdjuntos');
+
+            if (!modal) {
+                console.error('No se encontró el modal de adjuntos.');
+                return;
+            }
+
+            modal.style.display = 'block';
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+
+            document.body.classList.add('modal-open');
+
+            var fondo = document.getElementById('fondoModalAdjuntos');
+
+            if (!fondo) {
+                fondo = document.createElement('div');
+                fondo.id = 'fondoModalAdjuntos';
+                fondo.className = 'modal-backdrop fade show';
+
+                fondo.onclick = function () {
+                    window.cerrarModalAdjuntos();
+                };
+
+                document.body.appendChild(fondo);
+            }
+        };
+
+        window.cerrarModalAdjuntos = function () {
+            var modal = document.getElementById('modalAdjuntos');
+
+            if (modal) {
+                modal.classList.remove('show');
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+            }
+
+            document.body.classList.remove('modal-open');
+
+            var fondo = document.getElementById('fondoModalAdjuntos');
+
+            if (fondo) {
+                fondo.remove();
+            }
+        };
+
+        document.addEventListener('keydown', function (evento) {
+            if (evento.key === 'Escape') {
+                window.cerrarModalAdjuntos();
+            }
+        });
+    </script>
 }
 
 

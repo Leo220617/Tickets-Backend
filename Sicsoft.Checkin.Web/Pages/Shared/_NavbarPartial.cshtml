@@ -1,108 +1,426 @@
 ﻿@using Microsoft.AspNetCore.Http
-@using System;
-@using System.Collections.Generic;
-@using System.IO;
-@using System.Linq;
-@using System.Security.Claims;
-@using System.Threading.Tasks;
-@using Microsoft.AspNetCore.Mvc;
-@using Microsoft.AspNetCore.Mvc.RazorPages;
-@using Microsoft.Extensions.Configuration;
-@using Refit;
-@using Sicsoft.Checkin.Web.Models;
+@using System
+@using System.Linq
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Mvc
 @inject IHttpContextAccessor httpContextAccessor
+
 @{
-    var Roles = ((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == "Roles").Select(s1 => s1.Value).FirstOrDefault().Split("|");
+    var identity = User.Identity as ClaimsIdentity;
+
+    var rolesClaim = identity?.Claims
+        .FirstOrDefault(x => x.Type == "Roles")?.Value ?? "";
+
+    var Roles = rolesClaim.Split(
+        new[] { '|' },
+        StringSplitOptions.RemoveEmptyEntries
+    );
+
+    var nombreUsuario = identity?.Claims
+        .FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value
+        ?? User.Identity?.Name
+        ?? "Usuario";
+
+    var rutaActual = Context.Request.Path.Value ?? "";
+
+    var puedeUsuarios = Roles.Contains("6");
+    var puedeBitacora = Roles.Contains("15");
+    var puedeCorreos = Roles.Contains("8");
+    var puedeCorreosEnvio = Roles.Contains("21");
+    var puedeEmpresas = Roles.Contains("11");
+    var puedeTipos = Roles.Contains("18");
+    var puedeCalendario = Roles.Contains("20");
+    var puedeTickets = Roles.Contains("1");
+
+    var mostrarAdministracion =
+        puedeUsuarios ||
+        puedeBitacora ||
+        puedeCorreos ||
+       puedeCorreosEnvio ||
+        puedeEmpresas ||
+        puedeTipos;
 }
 
 <style>
-    .colorBlue {
-        background-color: #57b846;
+    :root {
+        --pg-nav-bg: #131e29;
+        --pg-nav-bg-soft: #1f3042;
+        --pg-nav-border: #34465a;
+        --pg-nav-text: #e7ecef;
+        --pg-nav-muted: #aab7b8;
+        --pg-nav-orange: #ff9900;
+        --pg-nav-blue: #00a1c9;
+    }
+
+    #sidenavAccordion.pg-sidenav {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+        border-right: 1px solid #0d151d;
+        background: var(--pg-nav-bg);
+        color: var(--pg-nav-text);
+        box-shadow: 2px 0 8px rgba(19, 30, 41, .16);
+    }
+
+    .pg-nav-brand {
+        position: relative;
+        padding: 22px 20px 19px;
+        border-bottom: 1px solid var(--pg-nav-border);
+        background: linear-gradient(135deg, #172535, #1f3042);
+    }
+
+        .pg-nav-brand::after {
+            content: "";
+            position: absolute;
+            right: 20px;
+            bottom: 0;
+            left: 20px;
+            height: 3px;
+            border-radius: 3px 3px 0 0;
+            background: var(--pg-nav-orange);
+        }
+
+    .pg-brand-mark {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+    }
+
+    .pg-brand-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border: 1px solid rgba(255, 255, 255, .14);
+        border-radius: 7px;
+        background: rgba(255, 255, 255, .07);
+        color: var(--pg-nav-orange);
+        font-size: 18px;
+    }
+
+    .pg-brand-title {
+        margin: 0;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: .025em;
+    }
+
+    .pg-brand-subtitle {
+        margin-top: 2px;
+        color: var(--pg-nav-muted);
+        font-size: 11px;
+    }
+
+    .pg-sidenav .sb-sidenav-menu {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 12px 10px 20px;
+    }
+
+    .pg-sidenav .nav {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pg-nav-heading {
+        margin: 18px 10px 7px;
+        color: var(--pg-nav-muted);
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+    }
+
+        .pg-nav-heading:first-child {
+            margin-top: 7px;
+        }
+
+    .pg-sidenav .pg-nav-link {
+        position: relative;
+        display: flex;
+        align-items: center;
+        min-height: 44px;
+        margin: 2px 0;
+        padding: 9px 12px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        color: var(--pg-nav-text);
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+    }
+
+        .pg-sidenav .pg-nav-link:hover {
+            border-color: rgba(255, 255, 255, .08);
+            background: rgba(255, 255, 255, .07);
+            color: #fff;
+        }
+
+        .pg-sidenav .pg-nav-link.active {
+            border-color: rgba(0, 161, 201, .32);
+            background: rgba(0, 161, 201, .16);
+            color: #fff;
+        }
+
+            .pg-sidenav .pg-nav-link.active::before {
+                content: "";
+                position: absolute;
+                top: 7px;
+                bottom: 7px;
+                left: -10px;
+                width: 4px;
+                border-radius: 0 3px 3px 0;
+                background: var(--pg-nav-orange);
+            }
+
+    .pg-sidenav .sb-nav-link-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 30px;
+        width: 30px;
+        height: 30px;
+        margin-right: 9px;
+        border-radius: 5px;
+        background: rgba(255, 255, 255, .06);
+        color: var(--pg-nav-muted);
+        font-size: 14px;
+    }
+
+    .pg-sidenav .pg-nav-link:hover .sb-nav-link-icon,
+    .pg-sidenav .pg-nav-link.active .sb-nav-link-icon {
+        background: rgba(255, 255, 255, .10);
+        color: var(--pg-nav-orange);
+    }
+
+    .pg-nav-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .pg-nav-chevron {
+        margin-left: auto;
+        color: #879596;
+        font-size: 10px;
+    }
+
+    .pg-sidenav-footer {
+        flex: 0 0 auto;
+        padding: 15px 18px;
+        border-top: 1px solid var(--pg-nav-border);
+        background: #101922;
+    }
+
+    .pg-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .pg-user-avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 34px;
+        width: 34px;
+        height: 34px;
+        border: 1px solid rgba(255, 153, 0, .35);
+        border-radius: 50%;
+        background: rgba(255, 153, 0, .10);
+        color: var(--pg-nav-orange);
+    }
+
+    .pg-user-caption {
+        color: var(--pg-nav-muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .07em;
+        text-transform: uppercase;
+    }
+
+    .pg-user-name {
+        overflow: hidden;
+        max-width: 160px;
+        margin-top: 1px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 </style>
- 
-<nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
-    <div class="sb-sidenav-menu">
-        <div class="nav">
-            @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "6").FirstOrDefault()))
-                {
-                    <div class="sb-sidenav-menu-heading">Usuarios</div>
-                    <a class="nav-link" asp-page="/Usuarios/Index">
-                        <div class="sb-nav-link-icon"><i class="fa fa-user"></i></div>
-                        Listado
-                    </a>
-                }
 
-            }
-             @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "15").FirstOrDefault()))
-                {
-                    <div class="sb-sidenav-menu-heading">Bitacora Errores</div>
-                    <a class="nav-link" asp-page="/BitacoraErrores/Index">
-                        <div class="sb-nav-link-icon"><i class="fa fa-exclamation-circle"></i></div>
-                        Listado
-                    </a>
-                }
+<nav class="sb-sidenav accordion sb-sidenav-dark pg-sidenav"
+     id="sidenavAccordion"
+     aria-label="Navegación principal">
 
-            }
-            @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "8").FirstOrDefault()))
-                {
-                    <div class="sb-sidenav-menu-heading">Correos Recepción</div>
-                    <a class="nav-link" asp-page="/CorreosRecepcion/Index">
-                        <div class="sb-nav-link-icon"><i class="fa fa-id-card"></i></div>
-                        Correos Recepción
-                    </a>
-                }
-
-            }
-            @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "11").FirstOrDefault()))
-                {
-                    <div class="sb-sidenav-menu-heading">Empresas</div>
-                    <a class="nav-link" asp-page="/Empresas/Index">
-                        <div class="sb-nav-link-icon"><i class="fa fa-home" ></i></div>
-                        Listado
-                    </a>
-                }
-
-            }
-
-              @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "18").FirstOrDefault()))
-                {
-                    <div class="sb-sidenav-menu-heading">Tipos Actividades</div>
-                    <a class="nav-link" asp-page="/TiposActividades/Index">
-                        <div class="sb-nav-link-icon"><i class="fa fa-home" ></i></div>
-                        Listado
-                    </a>
-                }
-
-            }
-
-            @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "20").FirstOrDefault()))
-                {
-                    <div class="sb-sidenav-menu-heading">Calendario</div>
-                    <a class="nav-link" asp-page="/Planificacion/Calendario">
-                        <div class="sb-nav-link-icon"><i class="fa fa-home" ></i></div>
-                        Listado
-                    </a>
-                }
-
-            }
-
-            @{if (!string.IsNullOrEmpty(Roles.Where(a => a == "1").FirstOrDefault()))
-                {
-                    <div class="sb-sidenav-menu-heading">Tickets</div>
-                    <a class="nav-link" asp-page="/Tiquetes/Index">
-                        <div class="sb-nav-link-icon"><i class="fa fa-ticket"></i></div>
-                        Listado
-                    </a>
-                }
-
-            }
-           
-
+    <div class="pg-nav-brand">
+        <div class="pg-brand-mark">
+            <span class="pg-brand-icon">
+                <i class="fa fa-headphones"></i>
+            </span>
+            <div>
+                <div class="pg-brand-title">Support Center</div>
+                <div class="pg-brand-subtitle">Administración de servicio</div>
+            </div>
         </div>
     </div>
-    <div class="sb-sidenav-footer">
-        <div class="small">Usuario:</div>
-        @(((ClaimsIdentity)User.Identity).Claims.Where(d => d.Type == ClaimTypes.Name).Select(s1 => s1.Value).FirstOrDefault())
+
+    <div class="sb-sidenav-menu">
+        <div class="nav">
+            @if (puedeTickets || puedeCalendario)
+            {
+                <div class="pg-nav-heading">Operación</div>
+
+                @if (puedeTickets)
+                {
+                    var activoTickets = rutaActual.StartsWith(
+                    "/Tiquetes",
+                    StringComparison.OrdinalIgnoreCase
+                    );
+
+                    <a class="nav-link pg-nav-link @(activoTickets ? "active" : "")"
+                       asp-page="/Tiquetes/Index"
+                       aria-current="@(activoTickets ? "page" : null)">
+                        <span class="sb-nav-link-icon">
+                            <i class="fa fa-ticket"></i>
+                        </span>
+                        <span class="pg-nav-label">Tiquetes</span>
+                        <i class="fa fa-chevron-right pg-nav-chevron"></i>
+                    </a>
+                }
+
+                @if (puedeCalendario)
+                {
+                    var activoCalendario = rutaActual.StartsWith(
+                    "/Planificacion",
+                    StringComparison.OrdinalIgnoreCase
+                    );
+
+                    <a class="nav-link pg-nav-link @(activoCalendario ? "active" : "")"
+                       asp-page="/Planificacion/Calendario"
+                       aria-current="@(activoCalendario ? "page" : null)">
+                        <span class="sb-nav-link-icon">
+                            <i class="fa fa-calendar"></i>
+                        </span>
+                        <span class="pg-nav-label">Calendario</span>
+                        <i class="fa fa-chevron-right pg-nav-chevron"></i>
+                    </a>
+                }
+            }
+
+            @if (mostrarAdministracion)
+            {
+                <div class="pg-nav-heading">Administración</div>
+
+                @if (puedeUsuarios)
+                {
+                    var activoUsuarios = rutaActual.StartsWith(
+                    "/Usuarios",
+                    StringComparison.OrdinalIgnoreCase
+                    );
+
+                    <a class="nav-link pg-nav-link @(activoUsuarios ? "active" : "")"
+                       asp-page="/Usuarios/Index"
+                       aria-current="@(activoUsuarios ? "page" : null)">
+                        <span class="sb-nav-link-icon"><i class="fa fa-users"></i></span>
+                        <span class="pg-nav-label">Usuarios</span>
+                        <i class="fa fa-chevron-right pg-nav-chevron"></i>
+                    </a>
+                }
+
+                @if (puedeEmpresas)
+                {
+                    var activoEmpresas = rutaActual.StartsWith(
+                    "/Empresas",
+                    StringComparison.OrdinalIgnoreCase
+                    );
+
+                    <a class="nav-link pg-nav-link @(activoEmpresas ? "active" : "")"
+                       asp-page="/Empresas/Index"
+                       aria-current="@(activoEmpresas ? "page" : null)">
+                        <span class="sb-nav-link-icon"><i class="fa fa-building"></i></span>
+                        <span class="pg-nav-label">Empresas</span>
+                        <i class="fa fa-chevron-right pg-nav-chevron"></i>
+                    </a>
+                }
+
+                @if (puedeTipos)
+                {
+                    var activoTipos = rutaActual.StartsWith(
+                    "/TiposActividades",
+                    StringComparison.OrdinalIgnoreCase
+                    );
+
+                    <a class="nav-link pg-nav-link @(activoTipos ? "active" : "")"
+                       asp-page="/TiposActividades/Index"
+                       aria-current="@(activoTipos ? "page" : null)">
+                        <span class="sb-nav-link-icon"><i class="fa fa-list-alt"></i></span>
+                        <span class="pg-nav-label">Tipos de actividades</span>
+                        <i class="fa fa-chevron-right pg-nav-chevron"></i>
+                    </a>
+                }
+
+                @if (puedeCorreos)
+                {
+                    var activoCorreos = rutaActual.StartsWith(
+                    "/CorreosRecepcion",
+                    StringComparison.OrdinalIgnoreCase
+                    );
+
+                    <a class="nav-link pg-nav-link @(activoCorreos ? "active" : "")"
+                       asp-page="/CorreosRecepcion/Index"
+                       aria-current="@(activoCorreos ? "page" : null)">
+                        <span class="sb-nav-link-icon"><i class="fa fa-envelope"></i></span>
+                        <span class="pg-nav-label">Correos de recepción</span>
+                        <i class="fa fa-chevron-right pg-nav-chevron"></i>
+                    </a>
+                }
+                @if (puedeCorreosEnvio)
+                {
+                    var activoCorreos = rutaActual.StartsWith(
+                    "/CorreoEnvio",
+                    StringComparison.OrdinalIgnoreCase
+                    );
+
+                    <a class="nav-link pg-nav-link @(activoCorreos ? "active" : "")"
+                       asp-page="/CorreoEnvio/Index"
+                       aria-current="@(activoCorreos ? "page" : null)">
+                        <span class="sb-nav-link-icon"><i class="fa fa-envelope"></i></span>
+                        <span class="pg-nav-label">Correo envio</span>
+                        <i class="fa fa-chevron-right pg-nav-chevron"></i>
+                    </a>
+                }
+                @if (puedeBitacora)
+                {
+                    var activoBitacora = rutaActual.StartsWith(
+                    "/BitacoraErrores",
+                    StringComparison.OrdinalIgnoreCase
+                    );
+
+                    <a class="nav-link pg-nav-link @(activoBitacora ? "active" : "")"
+                       asp-page="/BitacoraErrores/Index"
+                       aria-current="@(activoBitacora ? "page" : null)">
+                        <span class="sb-nav-link-icon"><i class="fa fa-exclamation-triangle"></i></span>
+                        <span class="pg-nav-label">Bitácora de errores</span>
+                        <i class="fa fa-chevron-right pg-nav-chevron"></i>
+                    </a>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="sb-sidenav-footer pg-sidenav-footer">
+        <div class="pg-user">
+            <span class="pg-user-avatar"><i class="fa fa-user"></i></span>
+            <div>
+                <div class="pg-user-caption">Sesión activa</div>
+                <div class="pg-user-name" title="@nombreUsuario">@nombreUsuario</div>
+            </div>
+        </div>
     </div>
 </nav>

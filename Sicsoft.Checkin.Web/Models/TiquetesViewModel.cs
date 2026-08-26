@@ -35,5 +35,6 @@ namespace Tickets.Models
         public string DuracionEstimada { get; set; }
         public string DuracionReal { get; set; }
         public string Tipo { get; set; }
+        public DateTime? FechaReapertura { get; set; }
     }
 }

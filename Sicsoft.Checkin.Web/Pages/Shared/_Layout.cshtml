@@ -47,6 +47,488 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.3/pako.min.js"></script>
 
+    <style id="paragon-layout-styles">
+        :root {
+            --pg-navy: #131e29;
+            --pg-navy-soft: #1f3042;
+            --pg-orange: #ff9900;
+            --pg-blue: #0073bb;
+            --pg-blue-dark: #005b99;
+            --pg-page: #f2f3f3;
+            --pg-surface: #ffffff;
+            --pg-border: #d5dbdb;
+            --pg-border-dark: #aab7b8;
+            --pg-text: #16191f;
+            --pg-muted: #5f6b7a;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+        }
+
+            body#cuerpoHTML {
+                background: var(--pg-page);
+                color: var(--pg-text);
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+                font-size: 14px;
+            }
+
+                body#cuerpoHTML a {
+                    transition: color .15s ease, background-color .15s ease, border-color .15s ease;
+                }
+
+                /* =========================================
+               BARRA SUPERIOR
+               ========================================= */
+
+                body#cuerpoHTML .sb-topnav {
+                    min-height: 64px;
+                    border-bottom: 1px solid #0d151d;
+                    background: var(--pg-navy) !important;
+                    box-shadow: 0 1px 5px rgba(19, 30, 41, .24);
+                }
+
+                    body#cuerpoHTML .sb-topnav .navbar-brand {
+                        position: relative;
+                        display: flex;
+                        align-items: center;
+                        align-self: stretch;
+                        min-width: 225px;
+                        margin-right: 0;
+                        padding: 0 22px !important;
+                        border-right: 1px solid #34465a;
+                        color: #ffffff;
+                        font-size: 16px;
+                        font-weight: 800;
+                        letter-spacing: .025em;
+                    }
+
+                        body#cuerpoHTML .sb-topnav .navbar-brand:hover {
+                            color: #ffffff;
+                        }
+
+                        body#cuerpoHTML .sb-topnav .navbar-brand::before {
+                            content: "";
+                            width: 9px;
+                            height: 9px;
+                            margin-right: 11px;
+                            border-radius: 2px;
+                            background: var(--pg-orange);
+                            box-shadow: 7px 7px 0 rgba(255, 153, 0, .35);
+                            transform: translateY(-3px);
+                        }
+
+                body#cuerpoHTML #sidebarToggle {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 40px;
+                    height: 40px;
+                    margin-left: 14px;
+                    padding: 0;
+                    border: 1px solid transparent;
+                    border-radius: 5px;
+                    color: #d5dbdb;
+                    text-decoration: none;
+                }
+
+                    body#cuerpoHTML #sidebarToggle:hover,
+                    body#cuerpoHTML #sidebarToggle:focus {
+                        border-color: #45586c;
+                        background: rgba(255, 255, 255, .08);
+                        color: #ffffff;
+                        box-shadow: none;
+                        outline: none;
+                    }
+
+                body#cuerpoHTML .sb-topnav > .navbar-nav {
+                    margin-left: auto !important;
+                }
+
+                body#cuerpoHTML .sb-topnav .nav-link {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-width: 42px;
+                    min-height: 42px;
+                    border: 1px solid transparent;
+                    border-radius: 6px;
+                    color: #d5dbdb;
+                }
+
+                    body#cuerpoHTML .sb-topnav .nav-link:hover,
+                    body#cuerpoHTML .sb-topnav .nav-link:focus,
+                    body#cuerpoHTML .sb-topnav .nav-link[aria-expanded="true"] {
+                        border-color: #45586c;
+                        background: rgba(255, 255, 255, .08);
+                        color: var(--pg-orange);
+                    }
+
+                /* =========================================
+               MENÚ DEL USUARIO
+               ========================================= */
+
+                body#cuerpoHTML .sb-topnav .dropdown-menu {
+                    min-width: 210px;
+                    margin-top: 9px;
+                    padding: 7px;
+                    border: 1px solid var(--pg-border-dark);
+                    border-radius: 7px;
+                    background: #ffffff;
+                    box-shadow: 0 5px 16px rgba(19, 30, 41, .18);
+                }
+
+                body#cuerpoHTML .sb-topnav .dropdown-item {
+                    min-height: 38px;
+                    padding: 9px 11px;
+                    border-radius: 4px;
+                    color: var(--pg-text);
+                    font-size: 13px;
+                    font-weight: 600;
+                }
+
+                    body#cuerpoHTML .sb-topnav .dropdown-item:hover,
+                    body#cuerpoHTML .sb-topnav .dropdown-item:focus {
+                        background: #eaeded;
+                        color: var(--pg-text);
+                    }
+
+                body#cuerpoHTML .sb-topnav .dropdown-divider {
+                    border-color: var(--pg-border);
+                }
+
+                /* =========================================
+               MENÚ LATERAL
+               ========================================= */
+
+                body#cuerpoHTML #layoutSidenav_nav {
+                    background: var(--pg-navy);
+                    box-shadow: 2px 0 8px rgba(19, 30, 41, .14);
+                }
+
+                    body#cuerpoHTML #layoutSidenav_nav .sb-sidenav {
+                        border-right: 1px solid #0d151d;
+                        background: var(--pg-navy);
+                    }
+
+                /* =========================================
+               CONTENIDO PRINCIPAL
+               Poco espacio en los lados
+               ========================================= */
+
+                body#cuerpoHTML #layoutSidenav_content {
+                    background: var(--pg-page);
+                }
+
+                    body#cuerpoHTML #layoutSidenav_content > main {
+                        flex: 1 0 auto;
+                        min-width: 0;
+                        padding: 16px 10px 26px;
+                        background: linear-gradient( 180deg, rgba(255, 255, 255, .70) 0, rgba(255, 255, 255, 0) 160px ), var(--pg-page);
+                    }
+
+                        /* Quita el espacio adicional de las páginas Paragon. */
+                        body#cuerpoHTML #layoutSidenav_content > main .pg-page {
+                            width: 100%;
+                            max-width: none;
+                            padding: 6px !important;
+                        }
+
+                        /* Reduce el padding de los container-fluid existentes. */
+                        body#cuerpoHTML #layoutSidenav_content > main > .container-fluid,
+                        body#cuerpoHTML #layoutSidenav_content > main .container-fluid.px-4 {
+                            width: 100%;
+                            max-width: none;
+                            padding-right: 6px !important;
+                            padding-left: 6px !important;
+                        }
+
+                /* =========================================
+               ENCABEZADOS
+               ========================================= */
+
+                body#cuerpoHTML main h1,
+                body#cuerpoHTML main h2,
+                body#cuerpoHTML main h3,
+                body#cuerpoHTML main h4,
+                body#cuerpoHTML main h5,
+                body#cuerpoHTML main h6 {
+                    color: var(--pg-text);
+                    font-weight: 700;
+                }
+
+                body#cuerpoHTML main label {
+                    color: #34465a;
+                    font-weight: 650;
+                }
+
+                /* =========================================
+               TARJETAS Y PANELES
+               ========================================= */
+
+                body#cuerpoHTML main .card,
+                body#cuerpoHTML main .panel,
+                body#cuerpoHTML main .ibox {
+                    border: 1px solid var(--pg-border);
+                    border-radius: 7px;
+                    background: var(--pg-surface);
+                    box-shadow: 0 1px 2px rgba(19, 30, 41, .08);
+                }
+
+                body#cuerpoHTML main .card-header,
+                body#cuerpoHTML main .panel-heading,
+                body#cuerpoHTML main .ibox-title {
+                    border-bottom: 1px solid var(--pg-border);
+                    background: #fafafa;
+                    color: var(--pg-text);
+                    font-weight: 700;
+                }
+
+                body#cuerpoHTML main .card-footer,
+                body#cuerpoHTML main .panel-footer,
+                body#cuerpoHTML main .ibox-footer {
+                    border-top: 1px solid var(--pg-border);
+                    background: #fafafa;
+                }
+
+                /* =========================================
+               CAMPOS Y FILTROS
+               ========================================= */
+
+                body#cuerpoHTML main .form-control,
+                body#cuerpoHTML main .form-select,
+                body#cuerpoHTML main .custom-select,
+                body#cuerpoHTML main select {
+                    min-height: 38px;
+                    border: 1px solid var(--pg-border-dark);
+                    border-radius: 4px;
+                    background-color: #ffffff;
+                    color: var(--pg-text);
+                    box-shadow: inset 0 1px 2px rgba(19, 30, 41, .04);
+                }
+
+                body#cuerpoHTML main textarea.form-control {
+                    min-height: 90px;
+                }
+
+                body#cuerpoHTML main .form-control:focus,
+                body#cuerpoHTML main .form-select:focus,
+                body#cuerpoHTML main .custom-select:focus,
+                body#cuerpoHTML main select:focus {
+                    border-color: var(--pg-blue);
+                    box-shadow: 0 0 0 2px rgba(0, 115, 187, .18);
+                    outline: none;
+                }
+
+                body#cuerpoHTML main .form-control:disabled,
+                body#cuerpoHTML main .form-control[readonly],
+                body#cuerpoHTML main select:disabled {
+                    background: #eaeded;
+                    color: var(--pg-muted);
+                }
+
+                /* =========================================
+               BOTONES
+               ========================================= */
+
+                body#cuerpoHTML main .btn {
+                    min-height: 36px;
+                    border-radius: 4px;
+                    font-weight: 650;
+                    box-shadow: 0 1px 1px rgba(19, 30, 41, .08);
+                }
+
+                body#cuerpoHTML main .btn-primary {
+                    border-color: var(--pg-blue-dark);
+                    background: var(--pg-blue);
+                    color: #ffffff;
+                }
+
+                    body#cuerpoHTML main .btn-primary:hover,
+                    body#cuerpoHTML main .btn-primary:focus {
+                        border-color: #004b80;
+                        background: var(--pg-blue-dark);
+                        color: #ffffff;
+                    }
+
+                body#cuerpoHTML main .btn-success {
+                    border-color: #037f0c;
+                    background: #1d8102;
+                    color: #ffffff;
+                }
+
+                body#cuerpoHTML main .btn-danger {
+                    border-color: #b12704;
+                    background: #d13212;
+                    color: #ffffff;
+                }
+
+                body#cuerpoHTML main .btn-warning {
+                    border-color: #e47911;
+                    background: var(--pg-orange);
+                    color: #16191f;
+                }
+
+                /* =========================================
+               TABLAS
+               ========================================= */
+
+                body#cuerpoHTML main .table {
+                    margin-bottom: 0;
+                    background: #ffffff;
+                    color: var(--pg-text);
+                }
+
+                    body#cuerpoHTML main .table thead th {
+                        border-top: 0;
+                        border-bottom: 1px solid var(--pg-border-dark);
+                        background: #eaeded;
+                        color: #34465a;
+                        font-size: 11px;
+                        font-weight: 800;
+                        letter-spacing: .035em;
+                        vertical-align: middle;
+                        text-transform: uppercase;
+                    }
+
+                    body#cuerpoHTML main .table tbody td {
+                        border-color: #eaeded;
+                        vertical-align: middle;
+                    }
+
+                body#cuerpoHTML main .table-hover tbody tr:hover {
+                    background: #f7fafa;
+                }
+
+                /* =========================================
+               PAGINACIÓN
+               ========================================= */
+
+                body#cuerpoHTML main .pagination .page-link {
+                    border-color: var(--pg-border);
+                    color: var(--pg-blue);
+                }
+
+                    body#cuerpoHTML main .pagination .page-link:hover {
+                        background: #eaeded;
+                        color: var(--pg-blue-dark);
+                    }
+
+                body#cuerpoHTML main .pagination .active .page-link {
+                    border-color: var(--pg-blue);
+                    background: var(--pg-blue);
+                    color: #ffffff;
+                }
+
+                /* =========================================
+               VENTANAS MODALES
+               ========================================= */
+
+                body#cuerpoHTML .modal-content {
+                    border: 1px solid var(--pg-border-dark);
+                    border-radius: 8px;
+                    background: #ffffff;
+                    box-shadow: 0 10px 28px rgba(19, 30, 41, .24);
+                }
+
+                body#cuerpoHTML .modal-header {
+                    border-bottom: 1px solid var(--pg-border);
+                    background: #fafafa;
+                }
+
+                body#cuerpoHTML .modal-footer {
+                    border-top: 1px solid var(--pg-border);
+                    background: #fafafa;
+                }
+
+                /* =========================================
+               PIE DE PÁGINA
+               ========================================= */
+
+                body#cuerpoHTML #layoutSidenav_content > footer {
+                    margin-top: 0 !important;
+                    padding: 16px 0 !important;
+                    border-top: 1px solid var(--pg-border);
+                    background: #ffffff !important;
+                    color: var(--pg-muted);
+                    box-shadow: 0 -1px 3px rgba(19, 30, 41, .04);
+                }
+
+                    body#cuerpoHTML #layoutSidenav_content > footer .container-fluid {
+                        padding-right: 12px !important;
+                        padding-left: 12px !important;
+                    }
+
+                    body#cuerpoHTML #layoutSidenav_content > footer .text-muted {
+                        color: var(--pg-muted) !important;
+                        font-size: 12px;
+                    }
+
+        /* =========================================
+               TABLET
+               En Razor se utiliza @@media
+               ========================================= */
+
+        @@media (max-width: 991.98px) {
+            body#cuerpoHTML #layoutSidenav_content > main {
+                padding: 12px 7px 22px;
+            }
+
+                body#cuerpoHTML #layoutSidenav_content > main .pg-page {
+                    padding: 4px !important;
+                }
+
+                body#cuerpoHTML
+                #layoutSidenav_content > main > .container-fluid {
+                    padding-right: 4px !important;
+                    padding-left: 4px !important;
+                }
+
+            body#cuerpoHTML .sb-topnav .navbar-brand {
+                min-width: 170px;
+            }
+        }
+
+        /* =========================================
+               CELULAR
+               ========================================= */
+
+        @@media (max-width: 575.98px) {
+            body#cuerpoHTML .sb-topnav .navbar-brand {
+                min-width: auto;
+                width: auto;
+                padding: 0 14px !important;
+                font-size: 14px;
+            }
+
+            body#cuerpoHTML #sidebarToggle {
+                margin-left: 4px;
+            }
+
+            body#cuerpoHTML #layoutSidenav_content > main {
+                padding: 8px 4px 18px;
+            }
+
+                body#cuerpoHTML #layoutSidenav_content > main .pg-page {
+                    padding: 2px !important;
+                }
+
+                body#cuerpoHTML
+                #layoutSidenav_content > main > .container-fluid {
+                    padding-right: 2px !important;
+                    padding-left: 2px !important;
+                }
+
+            body#cuerpoHTML
+            #layoutSidenav_content > footer
+            .d-flex {
+                display: block !important;
+                text-align: center;
+            }
+        }
+    </style>
+
 </head>
 <body id="cuerpoHTML">
     <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">

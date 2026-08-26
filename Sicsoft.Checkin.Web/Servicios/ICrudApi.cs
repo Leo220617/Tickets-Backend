@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Tickets.Models;
 
 namespace Sicsoft.Checkin.Web.Servicios
 {
@@ -19,7 +20,7 @@ namespace Sicsoft.Checkin.Web.Servicios
 
 
         [Get("/EnviarCorreo")]
-        Task ReenvioCorreo(int id);
+        Task ReenvioCorreo(int id, string destinatarios);
         [Post("")]
         Task<TEntity[]> AgregarBulk([Body] TEntity[] payload);
 
@@ -88,5 +89,11 @@ namespace Sicsoft.Checkin.Web.Servicios
 
         [Get("/LeerRespuestasTicket")]
         Task<HttpResponseMessage> LeerRespuestasTicket(int id);
+
+        [Post("/Unificar")]
+        Task<HttpResponseMessage> UnificarTiquetes([Body] UnificarTiquetesRequest solicitud
+);
+
+
     }
 }

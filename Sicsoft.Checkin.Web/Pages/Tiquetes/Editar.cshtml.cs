@@ -28,6 +28,18 @@ namespace Tickets.Pages.Tiquetes
 
         [BindProperty]
         public string NuevaRespuesta { get; set; }
+
+        [BindProperty]
+        public int TiempoHoras { get; set; }
+
+        [BindProperty]
+        public int TiempoMinutos { get; set; }
+
+        [BindProperty]
+        public int EstimadoHoras { get; set; }
+
+        [BindProperty]
+        public int EstimadoMinutos { get; set; }
         public EditarModel(
             ICrudApi<TiquetesViewModel, int> service,
             ICrudApi<UsuariosViewModel, int> users,
@@ -96,7 +108,13 @@ namespace Tickets.Pages.Tiquetes
                     return BadRequest(new { ok = false, mensaje = "Debe seleccionar el tipo del ticket antes de guardar." });
 
                 await GuardarTicketAsync();
-                return new JsonResult(new { ok = true, mensaje = "Los cambios se guardaron correctamente." });
+                return new JsonResult(new
+                {
+                    ok = true,
+                    mensaje = "Los cambios se guardaron correctamente.",
+                    duracion = Tiquete.Duracion,
+                    duracionEstimada = Tiquete.DuracionEstimada
+                });
             }
             catch (ApiException ex)
             {
@@ -118,7 +136,10 @@ namespace Tickets.Pages.Tiquetes
                 if (Tiquete == null || string.IsNullOrWhiteSpace(Tiquete.Tipo))
                     return BadRequest(new { ok = false, mensaje = "Debe seleccionar el tipo del ticket antes de guardar." });
 
-                await GuardarTicketAsync(false);
+                await GuardarTicketAsync(
+         guardarAdjuntos: false,
+         aplicarTiempo: false
+     );
                 return new JsonResult(new { ok = true, mensaje = "Cambios guardados automáticamente." });
             }
             catch (ApiException ex)
@@ -138,7 +159,8 @@ namespace Tickets.Pages.Tiquetes
       int idTicket,
       string texto,
       bool esNotaInterna,
-      string nuevoStatus)
+      string nuevoStatus,
+      string destinatarios)
         {
             try
             {
@@ -154,6 +176,14 @@ namespace Tickets.Pages.Tiquetes
                     {
                         ok = false,
                         mensaje = "Escriba un mensaje antes de continuar."
+                    });
+                }
+                if (!esNotaInterna && string.IsNullOrWhiteSpace(destinatarios))
+                {
+                    return BadRequest(new
+                    {
+                        ok = false,
+                        mensaje = "Debe ingresar al menos un destinatario."
                     });
                 }
 
@@ -192,7 +222,7 @@ namespace Tickets.Pages.Tiquetes
                 var guardada = await respuestas.Agregar(nuevaRespuesta);
 
                 if (!esNotaInterna)
-                    await respuestas.ReenvioCorreo(guardada.id);
+                    await respuestas.ReenvioCorreo( guardada.id, destinatarios );
 
                 var nombre = User.Identity?.Name ?? (esNotaInterna ? "Equipo de soporte" : "Soporte");
 
@@ -200,8 +230,12 @@ namespace Tickets.Pages.Tiquetes
                 {
                     ok = true,
                     mensaje = esNotaInterna
-                        ? "La nota interna se guardó correctamente."
-                        : "La respuesta se envió correctamente.",
+             ? "La nota interna se guardó correctamente."
+             : "La respuesta se envió correctamente.",
+
+                    duracion = Tiquete.Duracion,
+                    duracionEstimada = Tiquete.DuracionEstimada,
+
                     respuesta = new
                     {
                         id = guardada.id,
@@ -224,32 +258,223 @@ namespace Tickets.Pages.Tiquetes
             }
         }
 
-        private async Task GuardarTicketAsync(bool guardarAdjuntos = true)
+        private async Task GuardarTicketAsync(
+            bool guardarAdjuntos = true,
+            bool aplicarTiempo = true)
         {
-            if (guardarAdjuntos && !string.IsNullOrWhiteSpace(Tiquete.Adjunto))
+            if (guardarAdjuntos &&
+        !string.IsNullOrWhiteSpace(Tiquete.Adjunto))
             {
-                var adjuntos = Tiquete.Adjunto.Split('¶')
-                    .Where(x => !string.IsNullOrWhiteSpace(x))
-                    .Select(x => new Adjuntos { idTicket = Tiquete.id, Adjunto = x })
+                var filtroAdjuntos = new ParametrosFiltros
+                {
+                    Codigo1 = Tiquete.id
+                };
+
+                // Consultar los adjuntos que ya están guardados.
+                var adjuntosExistentes =
+                    await serviceAdj.ObtenerLista(filtroAdjuntos)
+                    ?? Array.Empty<Adjuntos>();
+
+                var contenidosExistentes = new HashSet<string>(
+                    adjuntosExistentes
+                        .Where(x =>
+                            !string.IsNullOrWhiteSpace(x.Adjunto)
+                        )
+                        .Select(x => x.Adjunto),
+                    StringComparer.Ordinal
+                );
+
+                // Insertar solamente archivos que todavía no existan.
+                var adjuntosNuevos = Tiquete.Adjunto
+                    .Split('¶')
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(x)
+                    )
+                    .Distinct()
+                    .Where(x =>
+                        !contenidosExistentes.Contains(x)
+                    )
+                    .Select(x => new Adjuntos
+                    {
+                        idTicket = Tiquete.id,
+                        Adjunto = x
+                    })
                     .ToArray();
 
-                if (adjuntos.Length > 0)
-                    await serviceAdj.AgregarBulk(adjuntos);
+                if (adjuntosNuevos.Length > 0)
+                {
+                    await serviceAdj.AgregarBulk(
+                        adjuntosNuevos
+                    );
+                }
             }
 
-            if (Tiquete.Duracion == "00:00:00" ||
-                (Tiquete.Duracion != Tiquete.DuracionReal &&
-                 Convert.ToDateTime(Tiquete.DuracionReal) > Convert.ToDateTime(Tiquete.Duracion)))
+            if (aplicarTiempo)
             {
-                Tiquete.Duracion = Tiquete.DuracionReal;
+                if (TiempoHoras < 0)
+                {
+                    throw new Exception(
+                        "Las horas invertidas no pueden ser negativas."
+                    );
+                }
+
+                if (TiempoMinutos < 0 || TiempoMinutos > 59)
+                {
+                    throw new Exception(
+                        "Los minutos invertidos deben estar entre 0 y 59."
+                    );
+                }
+
+                if (EstimadoHoras < 0)
+                {
+                    throw new Exception(
+                        "Las horas estimadas no pueden ser negativas."
+                    );
+                }
+
+                if (EstimadoMinutos < 0 || EstimadoMinutos > 59)
+                {
+                    throw new Exception(
+                        "Los minutos estimados deben estar entre 0 y 59."
+                    );
+                }
+
+                TimeSpan tiempoActual;
+
+                if (!TimeSpan.TryParse(
+                    Tiquete.Duracion ?? "00:00:00",
+                    out tiempoActual))
+                {
+                    tiempoActual = TimeSpan.Zero;
+                }
+
+                var tiempoAgregado =
+                    TimeSpan.FromHours(TiempoHoras) +
+                    TimeSpan.FromMinutes(TiempoMinutos);
+
+                var tiempoTotal = tiempoActual + tiempoAgregado;
+
+                Tiquete.Duracion = FormatearTiempo(tiempoTotal);
+                Tiquete.DuracionReal = Tiquete.Duracion;
+
+                var tiempoEstimado =
+                    TimeSpan.FromHours(EstimadoHoras) +
+                    TimeSpan.FromMinutes(EstimadoMinutos);
+
+                Tiquete.DuracionEstimada =
+                    FormatearTiempo(tiempoEstimado);
             }
 
             await service.Editar(Tiquete);
         }
+        private static string FormatearTiempo(TimeSpan tiempo)
+        {
+            var horasTotales = (int)Math.Floor(tiempo.TotalHours);
 
+            return horasTotales.ToString("00") +
+                   ":" +
+                   tiempo.Minutes.ToString("00") +
+                   ":00";
+        }
         private static string ObtenerError(ApiException ex)
         {
             return string.IsNullOrWhiteSpace(ex.Content) ? ex.Message : ex.Content;
+        }
+        public async Task<IActionResult> OnPostUnificarAsync(
+    int ticketPrincipalId,
+    int ticketSecundarioId)
+        {
+            try
+            {
+                var rolesClaim = ((ClaimsIdentity)User.Identity)
+                    .Claims
+                    .FirstOrDefault(c => c.Type == "Roles")
+                    ?.Value ?? "";
+
+                var roles = rolesClaim.Split(
+                    new[] { '|' },
+                    StringSplitOptions.RemoveEmptyEntries
+                );
+
+                if (!roles.Contains("2"))
+                {
+                    return new JsonResult(new
+                    {
+                        ok = false,
+                        mensaje = "No tiene permiso para unificar tiquetes."
+                    });
+                }
+
+                if (ticketPrincipalId <= 0 ||
+                    ticketSecundarioId <= 0)
+                {
+                    return new JsonResult(new
+                    {
+                        ok = false,
+                        mensaje = "Los números de tiquete no son válidos."
+                    });
+                }
+
+                if (ticketPrincipalId == ticketSecundarioId)
+                {
+                    return new JsonResult(new
+                    {
+                        ok = false,
+                        mensaje = "No puede unificar el tiquete consigo mismo."
+                    });
+                }
+
+                var solicitud = new UnificarTiquetesRequest
+                {
+                    TicketPrincipalId = ticketPrincipalId,
+                    TicketSecundarioId = ticketSecundarioId
+                };
+
+                var respuestaApi = await service.UnificarTiquetes(
+                    solicitud
+                );
+
+                var contenido = respuestaApi.Content == null
+                    ? ""
+                    : await respuestaApi.Content.ReadAsStringAsync();
+
+                if (!respuestaApi.IsSuccessStatusCode)
+                {
+                    return new JsonResult(new
+                    {
+                        ok = false,
+                        mensaje = string.IsNullOrWhiteSpace(contenido)
+                            ? "No fue posible unificar los tiquetes."
+                            : contenido.Trim('"')
+                    });
+                }
+
+                return new JsonResult(new
+                {
+                    ok = true,
+                    mensaje = "Los tiquetes fueron unificados correctamente.",
+                    ticketPrincipalId = ticketPrincipalId
+                });
+            }
+            catch (ApiException ex)
+            {
+                return new JsonResult(new
+                {
+                    ok = false,
+                    mensaje = string.IsNullOrWhiteSpace(ex.Content)
+                        ? ex.Message
+                        : ex.Content.Trim('"')
+                });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new
+                {
+                    ok = false,
+                    mensaje = "No fue posible unificar los tiquetes: " +
+                              ex.Message
+                });
+            }
         }
     }
 }

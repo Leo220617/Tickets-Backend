@@ -12,6 +12,7 @@
     var Roles = rolesClaim.Split('|', StringSplitOptions.RemoveEmptyEntries);
 
     var puedeGestionarEstado = Roles.Contains("2");
+    var puedeAsignarConsultor = Roles.Contains("3");
     var puedeFiltrarUsuario = Roles.Contains("4");
 
     var usuarios = Model.Usuarios ?? Array.Empty<InversionGloblalWeb.Models.UsuariosViewModel>();
@@ -404,6 +405,16 @@
             font-weight: 600;
             white-space: nowrap;
         }
+
+        .pg-icon-assign {
+            color: #0073bb;
+        }
+
+            .pg-icon-assign:hover {
+                border-color: #0073bb;
+                background: #eef7fc;
+                color: #005a8c;
+            }
     </style>
 }
 
@@ -603,7 +614,16 @@
                                            class="pg-icon-button">
                                             <i class="fa fa-pencil"></i>
                                         </a>
-
+                                        @if (item.Status == "E" && puedeAsignarConsultor)
+                                        {
+                                            <button type="button"
+                                                    onclick="asignarConsultor(@item.id)"
+                                                    title="Asignar consultor y abrir"
+                                                    aria-label="Asignar consultor"
+                                                    class="pg-icon-button pg-icon-assign">
+                                                <i class="fa fa-user-plus"></i>
+                                            </button>
+                                        }
                                         @if (puedeGestionarEstado)
                                         {
                                             if (item.Status == "C")
@@ -649,12 +669,25 @@
     </section>
 </div>
 
+<form method="post" id="formAsignarConsultor">
+    @Html.AntiForgeryToken()
+</form>
 @section scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 
     <script>
+        const consultoresDisponibles =
+        @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
+                 usuarios
+                 .OrderBy(usuario => usuario.Nombre)
+                 .Select(usuario => new
+                 {
+                     id = usuario.id,
+                     nombre = usuario.Nombre
+                 })
+                 ));
         let ticketSeleccionado = 0;
 
         function cambiarEstado(id, accion) {
@@ -739,6 +772,125 @@
                     Swal.fire('Error', 'No se pudo abrir el tiquete.', 'error');
                 });
             });
+        }
+        async function asignarConsultor(idTicket) {
+            const opciones = {};
+
+            consultoresDisponibles.forEach(function (consultor) {
+                opciones[consultor.id] =
+                    consultor.id + ' - ' + consultor.nombre;
+            });
+
+            const resultado = await Swal.fire({
+                icon: 'info',
+                title: 'Asignar consultor',
+                html:
+                    'Seleccione el consultor responsable del tiquete ' +
+                    '<strong>#' + idTicket + '</strong>.',
+                input: 'select',
+                inputOptions: opciones,
+                inputPlaceholder: 'Seleccione un consultor',
+                showCancelButton: true,
+                confirmButtonText: 'Asignar y abrir',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#0073bb',
+
+                inputValidator: function (valor) {
+                    if (!valor) {
+                        return 'Debe seleccionar un consultor.';
+                    }
+
+                    return null;
+                }
+            });
+
+            if (!resultado.isConfirmed) {
+                return;
+            }
+
+            const idUsuario =
+                parseInt(resultado.value, 10);
+
+            const confirmacion = await Swal.fire({
+                icon: 'question',
+                title: 'Confirmar asignación',
+                html:
+                    'El tiquete <strong>#' + idTicket +
+                    '</strong> será asignado al consultor seleccionado ' +
+                    'y pasará al estado <strong>Abierto</strong>.',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, asignar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#1f7a45'
+            });
+
+            if (!confirmacion.isConfirmed) {
+                return;
+            }
+
+            const token = document.querySelector(
+                '#formAsignarConsultor ' +
+                'input[name="__RequestVerificationToken"]'
+            ).value;
+
+            Swal.fire({
+                title: 'Asignando tiquete',
+                text: 'Por favor espere...',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+
+                didOpen: function () {
+                    Swal.showLoading();
+                }
+            });
+
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Page("Index", "AsignarConsultor")',
+
+                data: {
+                    __RequestVerificationToken: token,
+                    idTicket: idTicket,
+                    idUsuario: idUsuario
+                }
+            })
+                .done(function (respuesta) {
+                    if (!respuesta || !respuesta.correcto) {
+                        Swal.fire(
+                            'No se pudo asignar',
+                            respuesta && respuesta.mensaje
+                                ? respuesta.mensaje
+                                : 'No fue posible asignar el tiquete.',
+                            'error'
+                        );
+
+                        return;
+                    }
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Tiquete asignado',
+                        text: respuesta.mensaje,
+                        confirmButtonColor: '#0073bb'
+                    }).then(function () {
+                        window.location.reload();
+                    });
+                })
+                .fail(function (xhr) {
+                    let mensaje =
+                        'No fue posible comunicarse con el servidor.';
+
+                    if (xhr.responseJSON &&
+                        xhr.responseJSON.mensaje) {
+                        mensaje = xhr.responseJSON.mensaje;
+                    }
+
+                    Swal.fire(
+                        'Error',
+                        mensaje,
+                        'error'
+                    );
+                });
         }
     </script>
 }

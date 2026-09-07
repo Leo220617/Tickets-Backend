@@ -366,12 +366,22 @@
                     color: #161e2d;
                 }
 
-                .message-body {
-                    padding: 1rem;
-                    color: #263442;
-                    white-space: pre-wrap;
-                    overflow-wrap: anywhere;
-                }
+        .message-body {
+            padding: 1rem;
+            color: #263442;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+
+            .correo-recibido img,
+            .message-body img {
+                display: block;
+                max-width: 100% !important;
+                height: auto !important;
+                margin: 14px 0;
+                border: 1px solid #d5dbdb;
+                border-radius: 6px;
+            }
 
                 .message-editor:empty:before {
                     content: attr(data-placeholder);
@@ -612,6 +622,29 @@ media (max-width: 576px) {
             font-size: 11px;
             font-weight: 600;
         }
+
+        .correo-recibido {
+            overflow-wrap: anywhere;
+        }
+
+            .correo-recibido img {
+                display: block;
+                max-width: 100%;
+                height: auto;
+                margin: 14px 0;
+                border: 1px solid #d5dbdb;
+                border-radius: 6px;
+            }
+
+            .correo-recibido table {
+                display: block;
+                max-width: 100%;
+                overflow-x: auto;
+            }
+
+            .correo-recibido a {
+                color: #0073bb;
+            }
             </style>
 }
 
@@ -687,7 +720,9 @@ media (max-width: 576px) {
                         <div><h5 class="mb-0">Solicitud del usuario</h5><small class="text-muted">Mensaje original recibido</small></div>
                     </div>
                     <div class="card-body">
-                        <div class="request-box">@Model.Tiquete.Mensaje</div>
+                        <div class="request-box correo-recibido">
+                            @Html.Raw(Model.Tiquete.Mensaje)
+                        </div>
                         <textarea asp-for="Tiquete.Mensaje" hidden readonly></textarea>
                     </div>
                 </section>
@@ -720,7 +755,9 @@ media (max-width: 576px) {
                                         </div>
                                         <small class="text-muted">@Convert.ToDateTime(Model.Tiquete.FechaTicket).ToString("dd/MM/yyyy HH:mm")</small>
                                     </div>
-                                    <div class="message-body">@Model.Tiquete.Mensaje</div>
+                                    <div class="message-body correo-recibido">
+                                        @Html.Raw(Model.Tiquete.Mensaje)
+                                    </div>
                                 </div>
                             </article>
 

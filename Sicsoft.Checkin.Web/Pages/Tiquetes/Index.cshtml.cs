@@ -614,6 +614,97 @@ namespace Tickets.Pages.Tiquetes
                 });
             }
         }
+        public async Task<IActionResult> OnPostAsignarConsultorAsync(
+    int idTicket,
+    int idUsuario)
+        {
+            try
+            {
+                var identity = User.Identity as ClaimsIdentity;
+
+                var rolesClaim = identity?.Claims
+                    .FirstOrDefault(x => x.Type == "Roles")
+                    ?.Value ?? "";
+
+                var roles = rolesClaim.Split(
+                    new[] { '|' },
+                    StringSplitOptions.RemoveEmptyEntries
+                );
+
+                if (!roles.Contains("3"))
+                {
+                    return new JsonResult(new
+                    {
+                        correcto = false,
+                        mensaje = "No tiene permiso para asignar consultores."
+                    });
+                }
+
+                if (idTicket <= 0 || idUsuario <= 0)
+                {
+                    return new JsonResult(new
+                    {
+                        correcto = false,
+                        mensaje = "El tiquete o el consultor no son válidos."
+                    });
+                }
+
+                var ticket = await service.ObtenerPorId(
+                    idTicket
+                );
+
+                if (ticket == null)
+                {
+                    return new JsonResult(new
+                    {
+                        correcto = false,
+                        mensaje = "No se encontró el tiquete."
+                    });
+                }
+
+                if (ticket.Status != "E")
+                {
+                    return new JsonResult(new
+                    {
+                        correcto = false,
+                        mensaje =
+                            "Solo se pueden asignar tiquetes que estén en espera."
+                    });
+                }
+
+                ticket.idLoginAsignado = idUsuario;
+                ticket.Status = "A";
+
+                await service.Editar(ticket);
+
+                return new JsonResult(new
+                {
+                    correcto = true,
+                    mensaje =
+                        "El tiquete fue asignado y pasó al estado Abierto."
+                });
+            }
+            catch (ApiException ex)
+            {
+                return new JsonResult(new
+                {
+                    correcto = false,
+                    mensaje = string.IsNullOrWhiteSpace(ex.Content)
+                        ? ex.Message
+                        : ex.Content.Trim('"')
+                });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new
+                {
+                    correcto = false,
+                    mensaje =
+                        "No fue posible asignar el tiquete: " +
+                        ex.Message
+                });
+            }
+        }
     }
 }
 

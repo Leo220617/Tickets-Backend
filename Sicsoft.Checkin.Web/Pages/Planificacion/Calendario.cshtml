@@ -730,6 +730,17 @@
                                     </div>
 
                                     <div class="swal-field">
+                                        <label>Horas</label>
+
+                                        <input type="number"
+                                               id="ActividadHoras"
+                                               class="swal2-input"
+                                               min="0"
+                                               step="0.01"
+                                               placeholder="Ejemplo: 2.50">
+                                    </div>
+
+                                    <div class="swal-field">
                                         <label>Comentario</label>
 
                                         <textarea id="ActividadComentario"
@@ -772,6 +783,11 @@
                                 $('#ActividadTitulo')
                                     .val()
                                     .trim(),
+
+                            horas:
+                                parseFloat(
+                                    $('#ActividadHoras').val()
+                                ) || 0,
 
                             comentario:
                                 $('#ActividadComentario')
@@ -877,6 +893,11 @@
                             ? 'task-status-cancelled'
                             : 'task-status-pending';
 
+                const horas =
+    propiedades.horas ??
+    propiedades.Horas ??
+    0;
+
                 const botonRealizado =
                     estado !== 'Realizado'
                         ? `
@@ -931,6 +952,13 @@
                         propiedades.actividad ||
                         'Actividad'
                     )}
+                                    </div>
+                                    <div class="task-detail-row">
+                                        <strong>Horas:</strong>
+                                        ${Number(horas).toLocaleString('es-CR', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        })}
                                     </div>
 
                                     <div class="task-detail-row">

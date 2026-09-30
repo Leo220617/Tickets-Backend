@@ -243,6 +243,28 @@ namespace Tickets.Pages.Planificacion
             }
         }
 
+
+        public async Task<IActionResult> OnPostActualizarActividadAsync(
+    [FromBody] ActividadesViewModel actividad)
+        {
+            if (actividad == null || actividad.id <= 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    mensaje = "La actividad no es válida."
+                });
+            }
+
+            await service.Editar(actividad);
+
+            return new JsonResult(new
+            {
+                success = true,
+                mensaje = "La actividad fue actualizada correctamente."
+            });
+        }
+
         public async Task<IActionResult> OnPostMarcarRealizadoAsync(
             [FromBody] ActividadIdDTO datos)
         {

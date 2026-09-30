@@ -488,11 +488,13 @@
             const calendar = new FullCalendar.Calendar(
                 calendarElement,
                 {
-                    initialView: 'dayGridMonth',
+                    initialView: 'timeGridWeek',
                     locale: 'es',
                     height: 'auto',
                     firstDay: 1,
                     editable: true,
+                    eventDurationEditable: true,
+                    eventStartEditable: true,
                     dayMaxEvents: 4,
                     nowIndicator: true,
 
@@ -512,8 +514,8 @@
                     events: todosLosEventos,
 
                     dateClick: function (informacion) {
-                        abrirFormularioActividad(
-                            informacion.dateStr
+                       abrirFormularioActividad(
+                            formatoFechaApi(informacion.date)
                         );
                     },
 
@@ -525,8 +527,32 @@
                         );
                     },
 
-                    eventDrop: function (informacion) {
-                        actualizarFecha(
+                   eventDrop: function (informacion) {
+    const fechaAnterior = formatoFechaApi(
+        informacion.oldEvent.start
+    );
+
+    const fechaNueva = formatoFechaApi(
+        informacion.event.start
+    );
+
+    if (fechaAnterior === fechaNueva) {
+        actualizarHorasActividad(
+            informacion.event,
+            informacion.revert
+        );
+
+        return;
+    }
+
+    actualizarFecha(
+        informacion.event,
+        informacion.revert
+    );
+},
+
+                    eventResize: function (informacion) {
+                        actualizarHorasActividad(
                             informacion.event,
                             informacion.revert
                         );
@@ -595,7 +621,62 @@
 
                 abrirFormularioActividad(hoy);
             });
+            function actualizarHorasActividad(evento, revertir) {
+    const inicio = evento.start;
+    const final = evento.end;
 
+    if (!inicio || !final) {
+        revertir();
+
+        Swal.fire(
+            'Error',
+            'No fue posible obtener el horario de la actividad.',
+            'error'
+        );
+
+        return;
+    }
+
+    const horaInicio = obtenerHoraInput(inicio);
+    const horaFinal = obtenerHoraInput(final);
+
+    const actividad = {
+        id: parseInt(evento.id, 10),
+
+        horaInicio: horaInicio + ':00',
+
+        horaFinal: horaFinal + ':00',
+
+        horas: calcularHoras(
+            horaInicio,
+            horaFinal
+        )
+    };
+
+    $.ajax({
+        type: 'POST',
+        url: window.location.pathname +
+            '?handler=ActualizarActividad',
+        contentType: 'application/json',
+        data: JSON.stringify(actividad),
+
+        headers: {
+            RequestVerificationToken: token
+        }
+    })
+        .done(function () {
+            Swal.fire({
+                icon: 'success',
+                title: 'Horas actualizadas',
+                timer: 1000,
+                showConfirmButton: false
+            });
+        })
+        .fail(function (xhr) {
+            revertir();
+            mostrarError(xhr);
+        });
+}
             function aplicarFiltros() {
                 const idUsuario =
                     parseInt(
@@ -729,17 +810,19 @@
                                                placeholder="Descripción corta">
                                     </div>
 
-                                    <div class="swal-field">
-                                        <label>Horas</label>
-
-                                        <input type="number"
-                                               id="ActividadHoras"
-                                               class="swal2-input"
-                                               min="0"
-                                               step="0.01"
-                                               placeholder="Ejemplo: 2.50">
-                                    </div>
-
+                                   
+                                   <div class="swal-field">
+                                        <label>Hora inicio</label>
+                                        <input type="time"
+                                           id="ActividadHoraInicio"
+                                           class="swal2-input">
+                                     </div>
+                                       <div class="swal-field">
+                                        <label>Hora final</label>
+                                        <input type="time"
+                                               id="ActividadHoraFinal"
+                                               class="swal2-input">
+                                      </div>
                                     <div class="swal-field">
                                         <label>Comentario</label>
 
@@ -784,11 +867,17 @@
                                     .val()
                                     .trim(),
 
-                            horas:
-                                parseFloat(
-                                    $('#ActividadHoras').val()
-                                ) || 0,
+                           
+                                horaInicio:
+                                    $('#ActividadHoraInicio').val() + ':00',
 
+                                horaFinal:
+                                    $('#ActividadHoraFinal').val() + ':00',
+                                     horas:
+                               calcularHoras(
+                                    $('#ActividadHoraInicio').val(),
+                                    $('#ActividadHoraFinal').val()
+                                ),
                             comentario:
                                 $('#ActividadComentario')
                                     .val()
@@ -827,6 +916,30 @@
                             return false;
                         }
 
+                        if (!actividad.horaInicio) {
+                            Swal.showValidationMessage(
+                                'Debe seleccionar la hora de inicio.'
+                            );
+
+                            return false;
+                        }
+
+                        if (!actividad.horaFinal) {
+                            Swal.showValidationMessage(
+                                'Debe seleccionar la hora final.'
+                            );
+
+                            return false;
+                        }
+
+                        if (actividad.horaFinal <= actividad.horaInicio) {
+                            Swal.showValidationMessage(
+                                'La hora final debe ser mayor que la hora de inicio.'
+                            );
+
+                            return false;
+                        }
+
                         return actividad;
                     }
                 });
@@ -837,7 +950,349 @@
 
                 guardarActividad(resultado.value);
             }
+            async function abrirFormularioEditarActividad(evento) {
+    const propiedades = evento.extendedProps || {};
 
+    const fechaActual = formatoFechaApi(evento.start);
+
+    const horaInicioActual = evento.start
+        ? obtenerHoraInput(evento.start)
+        : '';
+
+    const horaFinalActual = evento.end
+        ? obtenerHoraInput(evento.end)
+        : horaInicioActual;
+
+    const resultado = await Swal.fire({
+        title: 'Editar actividad',
+
+        html: `
+            <div class="swal-form">
+                <div class="swal-field">
+                    <label>Fecha</label>
+
+                    <input type="date"
+                           id="EditarActividadFecha"
+                           class="swal2-input"
+                           value="${fechaActual}">
+                </div>
+
+                <div class="swal-field">
+                    <label>Consultor responsable</label>
+
+                    <select id="EditarActividadUsuario"
+                            class="swal2-select">
+                        <option value="">
+                            Seleccione un consultor
+                        </option>
+
+@foreach (var usuario in usuarios.OrderBy(u => u.Nombre))
+{
+                        <option value="@usuario.id">
+    @usuario.Nombre
+                        </option>
+}
+                    </select>
+                </div>
+
+                <div class="swal-field">
+                    <label>Empresa</label>
+
+                    <select id="EditarActividadEmpresa"
+                            class="swal2-select">
+                        <option value="0">
+                            Sin empresa
+                        </option>
+
+@foreach (var empresa in empresas.OrderBy(e => e.Nombre))
+{
+                        <option value="@empresa.id">
+    @empresa.Nombre
+                        </option>
+}
+                    </select>
+                </div>
+
+                <div class="swal-field">
+                    <label>Tipo de actividad</label>
+
+                    <select id="EditarActividadTipo"
+                            class="swal2-select">
+                        <option value="">
+                            Seleccione el tipo
+                        </option>
+
+@foreach (var tipo in tipos.OrderBy(t => t.nombre))
+{
+                        <option value="@tipo.id">
+    @tipo.nombre
+                        </option>
+}
+                    </select>
+                </div>
+
+                <div class="swal-field">
+                    <label>Título</label>
+
+                    <input type="text"
+                           id="EditarActividadTitulo"
+                           class="swal2-input"
+                           placeholder="Descripción corta"
+                           value="${escaparAtributoHtml(
+                               obtenerTituloEditable(evento)
+                           )}">
+                </div>
+
+                <div class="swal-field">
+                    <label>Hora inicio</label>
+
+                    <input type="time"
+                           id="EditarActividadHoraInicio"
+                           class="swal2-input"
+                           value="${horaInicioActual}">
+                </div>
+
+                <div class="swal-field">
+                    <label>Hora final</label>
+
+                    <input type="time"
+                           id="EditarActividadHoraFinal"
+                           class="swal2-input"
+                           value="${horaFinalActual}">
+                </div>
+
+                <div class="swal-field">
+                    <label>Comentario</label>
+
+                    <textarea id="EditarActividadComentario"
+                              class="swal2-textarea"
+                              placeholder="Detalles de la tarea">${escaparHtml(
+                                  propiedades.comentario || ''
+                              )}</textarea>
+                </div>
+            </div>
+        `,
+
+        width: 620,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar cambios',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#0073bb',
+
+        didOpen: function () {
+            $('#EditarActividadUsuario').val(
+                obtenerIdUsuarioEvento(evento)
+            );
+
+            $('#EditarActividadEmpresa').val(
+                propiedades.idEmpresa ||
+                propiedades.IdEmpresa ||
+                0
+            );
+
+            $('#EditarActividadTipo').val(
+                propiedades.tipo ||
+                propiedades.idTipoActividad ||
+                propiedades.IdTipoActividad ||
+                ''
+            );
+        },
+
+        preConfirm: function () {
+            const horaInicio =
+                $('#EditarActividadHoraInicio').val();
+
+            const horaFinal =
+                $('#EditarActividadHoraFinal').val();
+
+            const actividad = {
+                id: parseInt(evento.id, 10),
+
+                fechaAgendada:
+                    $('#EditarActividadFecha').val(),
+
+                idUsuario:
+                    parseInt(
+                        $('#EditarActividadUsuario').val(),
+                        10
+                    ),
+
+                idEmpresa:
+                    parseInt(
+                        $('#EditarActividadEmpresa').val(),
+                        10
+                    ) || 0,
+
+                idTipoActividad:
+                    parseInt(
+                        $('#EditarActividadTipo').val(),
+                        10
+                    ),
+
+                titulo:
+                    $('#EditarActividadTitulo')
+                        .val()
+                        .trim(),
+
+                horaInicio:
+                    horaInicio ? horaInicio + ':00' : '',
+
+                horaFinal:
+                    horaFinal ? horaFinal + ':00' : '',
+
+                horas: calcularHoras(
+                    horaInicio,
+                    horaFinal
+                ),
+
+                comentario:
+                    $('#EditarActividadComentario')
+                        .val()
+                        .trim()
+            };
+
+            if (!actividad.fechaAgendada) {
+                Swal.showValidationMessage(
+                    'Debe seleccionar la fecha.'
+                );
+
+                return false;
+            }
+
+            if (!actividad.idUsuario) {
+                Swal.showValidationMessage(
+                    'Debe seleccionar el consultor.'
+                );
+
+                return false;
+            }
+
+            if (!actividad.idTipoActividad) {
+                Swal.showValidationMessage(
+                    'Debe seleccionar el tipo.'
+                );
+
+                return false;
+            }
+
+            if (!actividad.titulo) {
+                Swal.showValidationMessage(
+                    'Debe escribir el título.'
+                );
+
+                return false;
+            }
+
+            if (!horaInicio) {
+                Swal.showValidationMessage(
+                    'Debe seleccionar la hora de inicio.'
+                );
+
+                return false;
+            }
+
+            if (!horaFinal) {
+                Swal.showValidationMessage(
+                    'Debe seleccionar la hora final.'
+                );
+
+                return false;
+            }
+
+            if (horaFinal <= horaInicio) {
+                Swal.showValidationMessage(
+                    'La hora final debe ser mayor que la hora de inicio.'
+                );
+
+                return false;
+            }
+
+            return actividad;
+        }
+    });
+
+    if (!resultado.isConfirmed) {
+        return;
+    }
+
+    actualizarActividad(resultado.value, evento);
+}
+
+            function actualizarActividad(actividad, evento) {
+    Swal.fire({
+        title: 'Guardando cambios',
+        allowOutsideClick: false,
+        didOpen: function () {
+            Swal.showLoading();
+        }
+    });
+
+    $.ajax({
+        type: 'POST',
+        url: window.location.pathname +
+            '?handler=ActualizarActividad',
+        contentType: 'application/json',
+        data: JSON.stringify(actividad),
+
+        headers: {
+            RequestVerificationToken: token
+        }
+    })
+        .done(function (respuesta) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Actividad actualizada',
+                text: respuesta.mensaje,
+                confirmButtonColor: '#0073bb'
+            }).then(function () {
+                window.location.reload();
+            });
+        })
+        .fail(function (xhr) {
+            mostrarError(xhr);
+        });
+}
+
+function obtenerHoraInput(fecha) {
+    const horas = String(
+        fecha.getHours()
+    ).padStart(2, '0');
+
+    const minutos = String(
+        fecha.getMinutes()
+    ).padStart(2, '0');
+
+    return horas + ':' + minutos;
+}
+
+function obtenerTituloEditable(evento) {
+    const propiedades = evento.extendedProps || {};
+
+    if (propiedades.titulo) {
+        return propiedades.titulo;
+    }
+
+    if (propiedades.Titulo) {
+        return propiedades.Titulo;
+    }
+
+    const titulo = evento.title || '';
+
+    const partes = titulo.split(' · ');
+
+    if (partes.length > 1) {
+        return partes.slice(1).join(' · ');
+    }
+
+    return titulo;
+}
+
+function escaparAtributoHtml(valor) {
+    return $('<div>')
+        .text(valor || '')
+        .html()
+        .replace(/"/g, '&quot;');
+}
             function guardarActividad(actividad) {
                 Swal.fire({
                     title: 'Asignando actividad',
@@ -910,6 +1365,16 @@
                                   `
                         : '';
 
+                const botonEditar = 
+                     `
+                                 <button type="button"
+        id="EditarActividad"
+        class="btn btn-primary btn-block mt-3">
+    Editar actividad
+</button>
+                                  `
+                        ;
+
                 Swal.fire({
                     title: evento.title,
 
@@ -960,7 +1425,10 @@
                                             maximumFractionDigits: 2
                                         })}
                                     </div>
-
+                                     <div class="task-detail-row">
+                                          <strong>Horario:</strong>
+                                         ${formatearHora(evento.start)} - ${formatearHora(evento.end)}
+                                    </div>
                                     <div class="task-detail-row">
                                         <strong>Comentario:</strong><br>
                                         ${escaparHtml(
@@ -969,6 +1437,7 @@
                                     </div>
 
                                     ${botonRealizado}
+                                    ${botonEditar}
                                 </div>
                             `,
 
@@ -982,10 +1451,44 @@
                                 marcarRealizado(evento);
                             }
                         );
+                        $('#EditarActividad').on('click', function () {
+                            abrirFormularioEditarActividad(evento);
+                        });
                     }
                 });
             }
+            function formatearHora(fecha) {
+    return new Intl.DateTimeFormat(
+        'es-CR',
+        {
+            hour: '2-digit',
+            minute: '2-digit'
+        }
+    ).format(fecha);
+}
 
+function calcularHoras(horaInicio, horaFinal) {
+    if (!horaInicio || !horaFinal) {
+        return 0;
+    }
+
+    const inicio = horaInicio.split(':');
+    const final = horaFinal.split(':');
+
+    const minutosInicio =
+        (parseInt(inicio[0], 10) * 60) +
+        parseInt(inicio[1], 10);
+
+    const minutosFinal =
+        (parseInt(final[0], 10) * 60) +
+        parseInt(final[1], 10);
+
+    if (minutosFinal <= minutosInicio) {
+        return 0;
+    }
+
+    return (minutosFinal - minutosInicio) / 60;
+}
             function marcarRealizado(evento) {
                 $.ajax({
                     type: 'POST',

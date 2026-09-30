@@ -27,6 +27,9 @@ namespace Tickets.Models
 
         public string title { get; set; }
         public DateTime start { get; set; }
+        public string horaInicio { get; set; }
+        public string horaFinal { get; set; }
+        public DateTime end { get; set; }
         public extendedProps extendedProps { get; set; }
         public List<AdjuntoActividadViewModel> adjuntos_actividades { get; set; }
     }
@@ -40,9 +43,8 @@ namespace Tickets.Models
         public string NomActividad { get; set; }
         public DateTime start { get; set; }
         public string usuario { get; set; }
-        public string empresa { get; set; }
-
-        public decimal horas { get; set; }
+        public string empresa { get; set; } 
+        public decimal horas { get; set; }  
         public List<AdjuntoActividadViewModel> adjuntos { get; set; }
 
 

@@ -639,16 +639,15 @@
     }
     function configurarAdjuntos() {
         const permitidos =
-            '.png,.jpg,.jpeg,.pdf,.xls,.xlsx,.doc,.docx,.csv';
+            '.png,.jpg,.jpeg,.pdf,.xls,.xlsx,.doc,.docx,.csv,.txt';
 
         const limiteTotalBytes = 18 * 1024 * 1024;
         const maximoArchivos = 5;
 
-        const anteriores = ($('#Adjunto').val() || '')
+        const anteriores = ($('#AdjuntosExistentes').val() || '')
             .split('¶')
             .filter(function (contenido) {
-                return contenido &&
-                    contenido.trim().length > 0;
+                return contenido && contenido.trim().length > 0;
             });
 
         function calcularTamanoDataUrl(contenido) {
@@ -711,18 +710,15 @@
         }
 
         function actualizarAdjuntos(dropzone) {
-            const nuevos =
-                obtenerArchivosNuevos(dropzone);
+            const nuevos = obtenerArchivosNuevos(dropzone);
 
-            const todos = anteriores
-                .concat(nuevos)
-                .slice(0, maximoArchivos);
+            // Solo se envían los archivos cargados en esta edición.
+            $('#Adjunto').val(nuevos.join('¶'));
 
-            $('#Adjunto').val(
-                todos.join('¶')
+            // Los anteriores se muestran, pero no se reenvían.
+            mostrarListaAdjuntos(
+                anteriores.concat(nuevos)
             );
-
-            mostrarListaAdjuntos(todos);
         }
 
         const tamanoAnterior =
@@ -774,7 +770,7 @@
             dictDefaultMessage:
                 '<i class="fa fa-cloud-upload" style="font-size:30px;color:#0073bb"></i><br>' +
                 '<strong>Haz clic o arrastra tus archivos aquí</strong><br>' +
-                '<span>PDF, Excel, Word, CSV, PNG o JPG</span><br>' +
+                '<span>PDF, Excel, Word, CSV, TXT, PNG o JPG</span><br>' +
                 '<small>Máximo 5 archivos y 18 MB en total</small>',
 
             dictRemoveFile: 'Eliminar',
@@ -920,6 +916,7 @@
             doc: 'application/msword',
             docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             csv: 'text/csv',
+            txt: 'text/plain',
             png: 'image/png',
             jpg: 'image/jpeg',
             jpeg: 'image/jpeg'

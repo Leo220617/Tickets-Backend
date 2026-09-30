@@ -83,11 +83,7 @@ namespace Tickets.Pages.Tiquetes
                 Usuarios = await users.ObtenerLista("");
                 Tiquete = await service.ObtenerPorId(id);
 
-                if (id != 0 && Adj != null)
-                {
-                    foreach (var item in Adj)
-                        Tiquete.Adjunto += item.Adjunto + "¶";
-                }
+             
 
                 Tiquete.DuracionReal = Tiquete.Duracion;
                 return Page();
@@ -364,6 +360,9 @@ namespace Tickets.Pages.Tiquetes
                 Tiquete.DuracionEstimada =
                     FormatearTiempo(tiempoEstimado);
             }
+
+            // Los adjuntos nuevos ya se insertaron en la tabla Adjuntos.
+            Tiquete.Adjunto = null;
 
             await service.Editar(Tiquete);
         }

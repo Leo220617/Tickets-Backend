@@ -652,7 +652,13 @@ media (max-width: 576px) {
     <input type="hidden" asp-for="Tiquete.id" id="TicketId" />
     <input type="hidden"id="UrlIndexTiquetes"value="@Url.Page("./Index")" />
     <input type="hidden" asp-for="Tiquete.Duracion" id="Duracion" />
-    <input type="hidden" asp-for="Tiquete.Adjunto" id="Adjunto" />
+ <input type="hidden" asp-for="Tiquete.Adjunto" id="Adjunto" />
+
+<textarea id="AdjuntosExistentes" class="d-none">
+        @string.Join("¶", Model.Adj?
+                .Where(a => !string.IsNullOrWhiteSpace(a.Adjunto))
+                .Select(a => a.Adjunto) ?? Enumerable.Empty<string>())
+</textarea>
 
     <main class="support-page">
 
@@ -1119,7 +1125,7 @@ media (max-width: 576px) {
     }
             <script src="~/lib/dropzone/dropzone.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-            <script src="~/js/Tickets/EditarTicket.js"></script>
+            <script src="~/js/Tickets/EditarTicket.js?v=1.0"></script>
     <script>
         window.abrirModalAdjuntos = function () {
             var modal = document.getElementById('modalAdjuntos');
